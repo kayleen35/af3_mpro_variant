@@ -1,0 +1,26 @@
+{
+  "name": "mpro-variant-binder-proxy-server",
+  "version": "1.0.0",
+  "description": "Local Ubuntu AlphaFold3 API Proxy Server for SARS-CoV-2 Mpro-Variant Binder",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "keywords": [
+    "alphafold3",
+    "proxy",
+    "bioinformatics",
+    "sars-cov-2",
+    "mpro"
+  ],
+  "author": "Antigravity",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}
