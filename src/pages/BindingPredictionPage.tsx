@@ -15,6 +15,7 @@ export const BindingPredictionPage: React.FC = () => {
     INITIAL_INHIBITORS.map((i) => i.id)
   );
   const [seed, setSeed] = useState<string>('');
+  const [fullInference] = useState<boolean>(true);
   const [isPredicting, setIsPredicting] = useState<boolean>(false);
   const [pollingStep, setPollingStep] = useState<string>('초기화 중');
   const [error, setError] = useState<string | null>(null);
@@ -42,37 +43,50 @@ export const BindingPredictionPage: React.FC = () => {
 
     setError(null);
     setIsPredicting(true);
-    setPollingStep('AlphaFold3 Dimer 복합체 템플릿 마운트 중...');
+    setPollingStep('WSL Ubuntu AlphaFold 3 엔진에 예측 요청 전송 중...');
 
     try {
       // 1. 예측 실행 요청
-      await startPrediction(jobId, selectedIds);
+      await startPrediction(jobId, selectedIds, {
+        fullInference,
+        seed: seed ? Number(seed) : undefined,
+      });
 
-      // 2. 상태 Polling 시뮬레이션 및 API 조회 루프
-      const steps = [
-        'Mpro Dimer 호모다이머 구조 정렬 중...',
-        '억제제 리가нд 도킹 포즈 탐색 (S1, S2, S4 subsites)...',
-        'Cys145 근접 상호작용 및 수소결합 네트워크 연산 중...',
-        '최종 복합체 mmCIF 구조 생성 완료 중...',
-      ];
+      setPollingStep('GPU 연산 시작됨 — RTX 4070 에서 3D 복합체 구조 생성 중...');
 
-      for (let i = 0; i < steps.length; i++) {
-        setPollingStep(steps[i]);
-        await new Promise((r) => setTimeout(r, 1200));
+      // 2. 실제 백엔드 status polling (무제한 대기, 10초 간격)
+      const POLL_INTERVAL = 10000;
+      let attempt = 0;
 
-        // 실제 API polling 시도 (에러가 나도 로컬 데모 진행을 위해 graceful handle)
+      while (true) {
+        await new Promise((r) => setTimeout(r, POLL_INTERVAL));
+        attempt++;
+
+        const elapsed = Math.floor((attempt * POLL_INTERVAL) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+
         try {
           const statusRes = await getPredictionStatus(jobId);
           if (statusRes && statusRes.status === 'completed') {
-            break;
+            setPollingStep('✅ 3D 구조 생성 완료! 결과 페이지로 이동합니다...');
+            await new Promise((r) => setTimeout(r, 800));
+            navigate(`/comparison?jobId=${jobId}`);
+            return;
+          }
+          if (statusRes && statusRes.status === 'timeout') {
+            setError('GPU 연산 시간이 초과되었습니다. WSL 내 로그를 확인해주세요.');
+            setIsPredicting(false);
+            return;
           }
         } catch (e) {
-          // 백엔드가 아직 연결되지 않았을 수 있으므로 시뮬레이션 계속
+          // 네트워크 에러 — 계속 polling
         }
-      }
 
-      // 3. 완료 시 비교 페이지로 이동
-      navigate(`/comparison?jobId=${jobId}`);
+        setPollingStep(
+          `GPU 연산 진행 중... (${minutes}분 ${seconds}초 경과) — 단백질 구조 폴딩 및 리간드 도킹 수행 중`
+        );
+      }
     } catch (err: any) {
       console.error('Prediction error:', err);
       setError(
@@ -183,6 +197,22 @@ export const BindingPredictionPage: React.FC = () => {
               <p className="text-[11px] text-gray-400 leading-relaxed">
                 SARS-CoV-2 Mpro는 Homodimer 복합체에서 촉매 기질 결합 능력이 발생하므로, 다이머 모델링 모드가 필수
                 고정됩니다.
+              </p>
+            </div>
+
+            {/* WSL Ubuntu GPU Engine Execution */}
+            <div className="p-4 rounded-xl bg-[#141b2d] border border-violet-500/40 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-violet-200 uppercase tracking-wider font-mono flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5 text-violet-400" />
+                  <span>WSL Ubuntu AlphaFold 3 GPU 모델링</span>
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-violet-950/80 text-violet-300 border border-violet-500/50 font-bold">
+                  RTX 4070
+                </span>
+              </div>
+              <p className="text-[11px] text-gray-300 leading-relaxed">
+                입력된 단백질 서열이 WSL Ubuntu 서버로 전송되어 정식 입력 파일(JSON)을 생성한 후, 로컬 GPU(NVIDIA RTX 4070) 및 PyTorch/JAX 엔진으로 실제 3D 복합체 구조를 신규 모델링합니다.
               </p>
             </div>
 

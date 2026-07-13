@@ -44,10 +44,13 @@ export const getAnalysisJob = async (jobId: string): Promise<AnalysisJob> => {
  */
 export const startPrediction = async (
   jobId: string,
-  inhibitorIds: string[]
+  inhibitorIds: string[],
+  options?: { fullInference?: boolean; seed?: number }
 ): Promise<AnalysisJob> => {
   const response = await client.post<AnalysisJob>(`/api/analysis/${jobId}/predict`, {
     inhibitorIds,
+    fullInference: options?.fullInference || false,
+    seed: options?.seed,
   });
   return response.data;
 };

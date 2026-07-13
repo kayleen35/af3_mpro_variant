@@ -20,24 +20,33 @@ export const InhibitorComparisonPage: React.FC = () => {
       return;
     }
 
-    const fetchJob = async () => {
-      setLoading(true);
+    let intervalId: any;
+
+    const fetchJob = async (silent = false) => {
+      if (!silent) setLoading(true);
       setError(null);
       try {
         const data = await getAnalysisJob(jobId);
         setJob(data);
       } catch (err: any) {
         console.error('Failed to fetch job:', err);
-        setError(
-          err?.response?.data?.message ||
-            `Job ID (${jobId})의 예측 비교 정보를 조회할 수 없습니다. 서버 응답을 확인하세요.`
-        );
+        if (!silent) {
+          setError(
+            err?.response?.data?.message ||
+              `Job ID (${jobId})의 예측 비교 정보를 조회할 수 없습니다. 서버 응답을 확인하세요.`
+          );
+        }
       } finally {
-        setLoading(false);
+        if (!silent) setLoading(false);
       }
     };
 
     fetchJob();
+    intervalId = setInterval(() => {
+      fetchJob(true);
+    }, 2000);
+
+    return () => clearInterval(intervalId);
   }, [jobId]);
 
   if (!jobId) {
@@ -146,34 +155,52 @@ export const InhibitorComparisonPage: React.FC = () => {
               {metrics ? (
                 <div className="space-y-2.5 pt-2 border-t border-[#243047]/60 text-xs font-mono">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-400">Cys145 Proximity:</span>
+                    <span className="text-gray-400">Ranking Score:</span>
+                    <span className={`font-bold ${(metrics.rankingScore ?? 0) > 0.5 ? 'text-emerald-300' : (metrics.rankingScore ?? 0) > 0.3 ? 'text-yellow-300' : 'text-rose-300'}`}>
+                      {typeof metrics.rankingScore === 'number'
+                        ? metrics.rankingScore.toFixed(4)
+                        : '연산 대기'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400">ipTM (interface):</span>
                     <span className="font-bold text-cyan-300">
-                      {typeof metrics.cys145Distance === 'number'
-                        ? `${metrics.cys145Distance.toFixed(2)} Å`
+                      {typeof metrics.iptm === 'number'
+                        ? metrics.iptm.toFixed(4)
                         : '연산 대기'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-400">H-Bond Count:</span>
+                    <span className="text-gray-400">pTM (predicted):</span>
                     <span className="font-bold text-violet-300">
-                      {typeof metrics.hBondCount === 'number'
-                        ? `${metrics.hBondCount} 개`
+                      {typeof metrics.ptm === 'number'
+                        ? metrics.ptm.toFixed(4)
                         : '연산 대기'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-400">E166/F167 Interaction:</span>
-                    <span className="text-gray-200 truncate max-w-[140px]">
-                      {metrics.a166f167Interaction || '완만함'}
+                    <span className="text-gray-400">Ligand ipTM (avg):</span>
+                    <span className={`font-bold ${(metrics.ligandIptm ?? 0) > 0.3 ? 'text-emerald-300' : 'text-amber-300'}`}>
+                      {typeof metrics.ligandIptm === 'number'
+                        ? metrics.ligandIptm.toFixed(4)
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400">Ligand PAE (Chain A→C):</span>
+                    <span className={`font-bold ${(metrics.ligandPaeA ?? 30) < 15 ? 'text-emerald-300' : 'text-amber-300'}`}>
+                      {typeof metrics.ligandPaeA === 'number'
+                        ? `${metrics.ligandPaeA.toFixed(2)} Å`
+                        : 'N/A'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400">Steric Clash:</span>
                     <span className="flex items-center gap-1">
-                      {metrics.stericClash === 'Yes' || metrics.stericClash === '감지됨' ? (
+                      {(metrics.hasClash ?? 0) > 0 ? (
                         <>
                           <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
-                          <span className="text-rose-400">감지됨</span>
+                          <span className="text-rose-400">감지됨 ({(metrics.hasClash * 100).toFixed(1)}%)</span>
                         </>
                       ) : (
                         <>
@@ -181,14 +208,6 @@ export const InhibitorComparisonPage: React.FC = () => {
                           <span className="text-emerald-400">없음 (Clean)</span>
                         </>
                       )}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-400">Pose Consistency (RMSD):</span>
-                    <span className="font-bold text-sky-300">
-                      {typeof metrics.poseConsistencyRmsd === 'number'
-                        ? `${metrics.poseConsistencyRmsd.toFixed(2)} Å`
-                        : 'N/A'}
                     </span>
                   </div>
                 </div>

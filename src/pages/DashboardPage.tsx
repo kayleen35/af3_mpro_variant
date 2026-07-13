@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, Cpu, Dna, ArrowRight } from 'lucide-react';
 import { EmptyState, ResearchBadge } from '../components/common';
@@ -7,6 +7,20 @@ import { InhibitorCard } from '../components/inhibitor';
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const [engineStatus, setEngineStatus] = useState<string>('CHECKING WSL ENGINE...');
+
+  useEffect(() => {
+    fetch('http://localhost:8000/api/af3/health')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.status === 'ok') {
+          setEngineStatus(`WSL AF3 READY (${data.gpuName || 'RTX 4070'})`);
+        } else {
+          setEngineStatus('WSL ENGINE OFFLINE');
+        }
+      })
+      .catch(() => setEngineStatus('WSL ENGINE OFFLINE'));
+  }, []);
 
   return (
     <div className="space-y-8 animate-fadeIn">
@@ -18,8 +32,12 @@ export const DashboardPage: React.FC = () => {
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
             <div className="flex items-center gap-3">
-              <span className="px-2.5 py-0.5 rounded text-xs font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
-                LOCAL UBUNTU AF3 MOUNTED
+              <span className={`px-2.5 py-0.5 rounded text-xs font-mono font-bold border ${
+                engineStatus.includes('READY')
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                  : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+              }`}>
+                {engineStatus}
               </span>
               <ResearchBadge />
             </div>

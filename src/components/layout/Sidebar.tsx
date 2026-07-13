@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -20,6 +20,12 @@ interface MenuItem {
   exact?: boolean;
 }
 
+interface ServerStatus {
+  status: 'ok' | 'unreachable' | 'checking';
+  gpuName?: string;
+  message?: string;
+}
+
 const menuItems: MenuItem[] = [
   { name: '대시보드', path: '/', icon: LayoutDashboard, exact: true },
   { name: '시퀀스 입력', path: '/sequence', icon: Dna },
@@ -33,6 +39,30 @@ const menuItems: MenuItem[] = [
 export const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [serverStatus, setServerStatus] = useState<ServerStatus>({ status: 'checking' });
+
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const res = await fetch('http://localhost:8000/api/af3/health');
+        if (res.ok) {
+          const data = await res.json();
+          setServerStatus({
+            status: data.status === 'ok' ? 'ok' : 'unreachable',
+            gpuName: data.gpuName || 'RTX 4070',
+            message: data.message
+          });
+        } else {
+          setServerStatus({ status: 'unreachable' });
+        }
+      } catch (err) {
+        setServerStatus({ status: 'unreachable' });
+      }
+    };
+    checkStatus();
+    const interval = setInterval(checkStatus, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleStartNewAnalysis = () => {
     navigate('/sequence');
@@ -86,7 +116,7 @@ export const Sidebar: React.FC = () => {
         </nav>
       </div>
 
-      {/* Bottom status widget: Local Ubuntu AF3 Server status */}
+      {/* Bottom status widget: Live Ubuntu AF3 Server status */}
       <div className="p-4 border-t border-[#243047]/60 bg-[#070b18]/60 m-2 rounded-xl border border-[#243047]/40">
         <div className="flex items-center gap-2.5 mb-1.5">
           <Server className="w-4 h-4 text-violet-400" />
@@ -94,10 +124,28 @@ export const Sidebar: React.FC = () => {
         </div>
         <div className="flex items-center justify-between text-[11px] text-gray-400">
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Local Instance</span>
+            <span
+              className={`w-2 h-2 rounded-full ${
+                serverStatus.status === 'ok'
+                  ? 'bg-emerald-400 animate-pulse'
+                  : serverStatus.status === 'checking'
+                  ? 'bg-amber-400'
+                  : 'bg-rose-500'
+              }`}
+            />
+            <span>{serverStatus.status === 'ok' ? serverStatus.gpuName || 'RTX 4070' : 'Offline'}</span>
           </span>
-          <span className="font-mono text-cyan-400">Ready</span>
+          <span
+            className={`font-mono ${
+              serverStatus.status === 'ok'
+                ? 'text-emerald-400'
+                : serverStatus.status === 'checking'
+                ? 'text-amber-400'
+                : 'text-rose-400'
+            }`}
+          >
+            {serverStatus.status === 'ok' ? 'Online' : serverStatus.status === 'checking' ? 'Checking' : 'Disconnected'}
+          </span>
         </div>
         <div className="mt-2 pt-2 border-t border-[#243047]/40 text-[10px] text-gray-500 flex items-center gap-1">
           <ActivitySquare className="w-3 h-3 text-gray-500" />
