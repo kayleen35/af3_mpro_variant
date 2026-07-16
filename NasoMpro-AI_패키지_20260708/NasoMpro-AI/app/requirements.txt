@@ -1,0 +1,8 @@
+streamlit
+rdkit
+pandas
+pillow
+openai
+anthropic
+scikit-learn>=1.9
+numpy>=2.0

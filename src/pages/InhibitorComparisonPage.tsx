@@ -9,6 +9,9 @@ export const InhibitorComparisonPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const jobId = searchParams.get('jobId');
+  const elapsedSec = Number(searchParams.get('elapsed') || 0);
+  const elapsedMin = Math.floor(elapsedSec / 60);
+  const elapsedRemSec = elapsedSec % 60;
 
   const [job, setJob] = useState<AnalysisJob | null>(null);
   const [loading, setLoading] = useState<boolean>(!!jobId);
@@ -63,8 +66,8 @@ export const InhibitorComparisonPage: React.FC = () => {
   if (loading) {
     return (
       <LoadingState
-        title="5개 억제제 구조 비교 연산 및 지표 추출 중..."
-        description="Nirmatrelvir, Ensitrelvir, Leritrelvir, GC376, Compound 4와 변이체 복합체의 상대적 결합 포즈(RMSD, Cys145 proximity)를 비교 분석하고 있습니다."
+        title="억제제 구조 비교 연산 및 지표 추출 중..."
+        description="선택된 억제제와 Mpro Dimer 복합체의 AlphaFold3 예측 결과를 불러오고 있습니다."
       />
     );
   }
@@ -98,6 +101,11 @@ export const InhibitorComparisonPage: React.FC = () => {
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-mono text-cyan-400">JOB ID: {jobId}</span>
             <StatusPill status={job.status} size="sm" />
+            {elapsedSec > 0 && (
+              <span className="text-xs font-mono px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300">
+                ⏱ 총 연산 시간: {elapsedMin > 0 ? `${elapsedMin}분 ` : ''}{elapsedRemSec}초
+              </span>
+            )}
           </div>
           <h1 className="text-2xl font-bold text-gray-100 flex items-center gap-2.5">
             <BarChart2 className="w-7 h-7 text-cyan-400" />

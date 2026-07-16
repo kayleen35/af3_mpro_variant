@@ -32,11 +32,10 @@ export const DashboardPage: React.FC = () => {
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
             <div className="flex items-center gap-3">
-              <span className={`px-2.5 py-0.5 rounded text-xs font-mono font-bold border ${
-                engineStatus.includes('READY')
+              <span className={`px-2.5 py-0.5 rounded text-xs font-mono font-bold border ${engineStatus.includes('READY')
                   ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
                   : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-              }`}>
+                }`}>
                 {engineStatus}
               </span>
               <ResearchBadge />
@@ -115,7 +114,7 @@ export const DashboardPage: React.FC = () => {
       <div className="space-y-4 pt-2">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-gray-100">분석 대상 핵심 억제제 5종</h2>
+            <h2 className="text-lg font-bold text-gray-100">분석 대상 핵심 억제제 16종</h2>
             <p className="text-xs text-gray-400 mt-0.5">
               논문 흐름 및 연구 목적에 맞춰 구성된 Mpro 표적 후보군입니다. (임의 약효 수치 배제)
             </p>

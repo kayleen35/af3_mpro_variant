@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NasalMpro · AI 항바이러스 신약개발 플랫폼</title>
+<style>
+  :root{
+    --bg:#0b1220; --panel:#111c31; --panel2:#0f1830; --line:#22304d;
+    --ink:#e8eefc; --sub:#9fb0d0; --mut:#6f82a6;
+    --teal:#2dd4bf; --indigo:#818cf8; --amber:#f59e0b; --rose:#fb7185; --green:#34d399;
+    --accent:#38bdf8;
+    --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.35);
+    font-synthesis:none;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:radial-gradient(1200px 600px at 80% -10%, #16233f 0%, transparent 60%),
+               radial-gradient(900px 500px at -10% 10%, #10243a 0%, transparent 55%),
+               var(--bg);
+    color:var(--ink);
+    font-family:"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+    line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--accent)}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+  header.hero{
+    padding:34px 0 18px; border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(45,212,191,.06), transparent);
+  }
+  .brandrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .logo{
+    width:46px;height:46px;border-radius:12px;flex:0 0 auto;
+    background:conic-gradient(from 210deg,var(--teal),var(--indigo),var(--accent),var(--teal));
+    box-shadow:0 0 0 1px rgba(255,255,255,.08) inset, 0 8px 20px rgba(56,189,248,.25);
+    display:grid;place-items:center;font-weight:800;color:#04121f;font-size:20px;
+  }
+  h1{font-size:26px;margin:0;letter-spacing:-.02em}
+  .tagline{color:var(--sub);font-size:14px;margin-top:2px}
+  .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .pill{font-size:12px;color:var(--sub);border:1px solid var(--line);background:var(--panel2);
+        padding:5px 11px;border-radius:999px}
+  .pill b{color:var(--ink)}
+  nav.tabs{position:sticky;top:0;z-index:20;background:rgba(11,18,32,.86);backdrop-filter:blur(10px);
+           border-bottom:1px solid var(--line)}
+  .tabrow{display:flex;gap:4px;overflow-x:auto;padding:8px 0}
+  .tab{white-space:nowrap;border:0;background:transparent;color:var(--sub);font-size:14px;font-weight:600;
+       padding:10px 14px;border-radius:10px;cursor:pointer;font-family:inherit}
+  .tab:hover{color:var(--ink);background:var(--panel2)}
+  .tab.active{color:#04121f;background:linear-gradient(90deg,var(--teal),var(--accent))}
+  main{padding:28px 0 70px}
+  section{display:none;animation:fade .35s ease}
+  section.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  h2.sec{font-size:20px;margin:4px 0 4px;letter-spacing:-.01em}
+  .lead{color:var(--sub);max-width:800px;margin:0 0 18px}
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:860px){.g2,.g3,.g4{grid-template-columns:1fr}}
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+        border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+  .card h3{margin:0 0 8px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .card p{margin:6px 0;color:var(--sub);font-size:14px}
+  .kpi{display:flex;flex-direction:column;gap:2px}
+  .kpi .num{font-size:28px;font-weight:800;letter-spacing:-.02em}
+  .kpi .lbl{font-size:12px;color:var(--mut)}
+  .num.teal{color:var(--teal)} .num.ind{color:var(--indigo)} .num.amb{color:var(--amber)} .num.grn{color:var(--green)} .num.ros{color:var(--rose)}
+  .chip{display:inline-block;font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--sub);background:var(--panel2)}
+  .chip.on{color:#04121f;background:var(--teal);border-color:transparent;font-weight:700}
+  .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+  @media(max-width:860px){.flow{grid-template-columns:1fr}}
+  .node{position:relative;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .node .ag{font-size:11px;color:var(--teal);font-weight:800;letter-spacing:.08em}
+  .node h4{margin:6px 0 4px;font-size:14px}
+  .node p{margin:0;color:var(--mut);font-size:12.5px}
+  .node .area{margin-top:8px;font-size:11px;color:var(--indigo)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--mut);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  td b{color:var(--ink)}
+  .simwrap{display:grid;grid-template-columns:340px 1fr;gap:16px}
+  @media(max-width:940px){.simwrap{grid-template-columns:1fr}}
+  .control{margin:12px 0}
+  .control label{display:flex;justify-content:space-between;font-size:13px;color:var(--sub);margin-bottom:5px}
+  .control label b{color:var(--teal)}
+  input[type=range]{width:100%;accent-color:var(--teal);height:4px}
+  select,button.act{font-family:inherit}
+  select{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px}
+  .ligbtns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .ligbtn{flex:1;min-width:96px;border:1px solid var(--line);background:var(--panel2);color:var(--sub);
+          border-radius:10px;padding:9px;font-size:12.5px;cursor:pointer;font-weight:600}
+  .ligbtn.active{color:#04121f;background:linear-gradient(90deg,var(--indigo),var(--accent));border-color:transparent}
+  .meter{height:10px;background:#0a1426;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin-top:6px}
+  .meter > i{display:block;height:100%;border-radius:999px;transition:width .35s ease}
+  .scorebig{font-size:46px;font-weight:800;letter-spacing:-.03em;line-height:1}
+  .verdict{margin-top:10px;font-size:13px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel2)}
+  canvas{width:100%;height:auto;display:block}
+  .foot{margin-top:14px;color:var(--mut);font-size:12px}
+  .note{font-size:12px;color:var(--mut);border-left:3px solid var(--amber);padding:4px 0 4px 10px;margin:10px 0}
+  .tl{position:relative;margin:8px 0 0;padding-left:18px}
+  .tl:before{content:"";position:absolute;left:5px;top:4px;bottom:4px;width:2px;background:var(--line)}
+  .tl .it{position:relative;margin:0 0 12px}
+  .tl .it:before{content:"";position:absolute;left:-16px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 3px rgba(45,212,191,.18)}
+  .tl .it .d{font-size:12px;color:var(--teal);font-weight:700}
+  .tl .it .t{font-size:13.5px}
+  .badge{font-size:11px;padding:2px 8px;border-radius:6px;background:rgba(52,211,153,.14);color:var(--green);border:1px solid rgba(52,211,153,.3)}
+  .badge.warn{background:rgba(245,158,11,.14);color:var(--amber);border-color:rgba(245,158,11,.3)}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:860px){.split{grid-template-columns:1fr}}
+  ul.tick{list-style:none;padding:0;margin:8px 0}
+  ul.tick li{padding:6px 0 6px 24px;position:relative;color:var(--sub);font-size:13.5px}
+  ul.tick li:before{content:"✓";position:absolute;left:0;color:var(--teal);font-weight:800}
+  .disc{margin-top:26px;padding:14px 16px;border:1px dashed var(--line);border-radius:12px;color:var(--mut);font-size:12px}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="brandrow">
+      <div class="logo">M<sup style="font-size:10px">pro</sup></div>
+      <div>
+        <h1>NasalMpro <span style="color:var(--mut);font-weight:500;font-size:16px">· AI 항바이러스 신약개발 플랫폼</span></h1>
+        <div class="tagline">SARS-CoV-2 <b>Mpro</b> 타겟 저해제 결합 예측 → <b>비강 스프레이</b> 항바이러스제 · Agentic AI 파이프라인</div>
+      </div>
+    </div>
+    <div class="pills">
+      <span class="pill">🏆 <b>제4회 AI 신약개발 경진대회</b> (4th JUMP AI) 출전용</span>
+      <span class="pill">👥 팀 <b>알파폴드팀</b> (아시아경제교육센터 · 팀장 국경희)</span>
+      <span class="pill">🧑‍🔬 멘토 <b>홍성현</b> (클리켐바이오 대표)</span>
+      <span class="pill">🧬 방법 <b>AlphaFold3</b> 리간드 복합체 예측</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs"><div class="wrap"><div class="tabrow" id="tabrow">
+  <button class="tab active" data-t="overview">개요</button>
+  <button class="tab" data-t="pipeline">Agentic 파이프라인</button>
+  <button class="tab" data-t="sim">결합예측 시뮬레이터</button>
+  <button class="tab" data-t="screen">후보 스크리닝</button>
+  <button class="tab" data-t="nasal">비강 제형 설계</button>
+  <button class="tab" data-t="comp">경진대회 전략</button>
+</div></div></nav>
+
+<main><div class="wrap">
+
+<!-- ================= OVERVIEW ================= -->
+<section id="overview" class="active">
+  <h2 class="sec">왜 Mpro인가 — 프로젝트 방향 전환의 논리</h2>
+  <p class="lead">기존 Spike 단백질–항체 접근은 AlphaFold3의 <b>항체-항원 결합 예측 정확도 한계</b>에 부딪혔습니다.
+  타겟을 <b>Mpro(Main Protease, 3CL protease)</b> 기반 <b>리간드/Inhibitor 결합 복합체</b> 예측으로 전환하고,
+  응용은 <b>비강 스프레이</b>로 재설정했습니다. — 홍성현 대표 멘토링(2026-07-07) 반영.</p>
+
+  <div class="grid g4">
+    <div class="card kpi"><span class="num teal">His41·Cys145</span><span class="lbl">Mpro 촉매 이중잔기 (catalytic dyad)</span></div>
+    <div class="card kpi"><span class="num ind">~11 sites</span><span class="lbl">바이러스 폴리단백질 절단 부위 (복제 필수)</span></div>
+    <div class="card kpi"><span class="num amb">비강·상기도</span><span class="lbl">SARS-CoV-2 초기 증식 부위 → 국소 타겟</span></div>
+    <div class="card kpi"><span class="num grn">높은 선택성</span><span class="lbl">인간 프로테아제 상동체 부재 → off-target 낮음</span></div>
+  </div>
+
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card">
+      <h3>🎯 치료 전략 (Mechanism)</h3>
+      <p>비강 스프레이 분무 → 약물이 <b>비강 점막·상피세포</b>로 침투 → 세포 내 <b>Mpro를 선택적으로 억제</b> →
+      바이러스 폴리단백질 절단 차단 → <b>복제 중단</b> → 바이러스 양 감소 및 확산 억제.</p>
+      <p class="note">Spike-항체가 "침입"을 막는다면, Mpro 저해는 <b>복제 기전을 직접 차단</b>합니다. 코 점막 초기 증식 단계에서 끊는 것이 핵심 이점.</p>
+    </div>
+    <div class="card">
+      <h3>⚖️ Spike-항체 vs Mpro-저해제</h3>
+      <table>
+        <tr><th>항목</th><th>Spike–항체</th><th>Mpro–저해제(본 과제)</th></tr>
+        <tr><td>작용점</td><td>바이러스 진입 차단</td><td><b>복제효소 직접 억제</b></td></tr>
+        <tr><td>AF3 예측</td><td>항체-항원 <b>정확도 낮음</b></td><td>리간드 복합체 <b>상대적 양호</b></td></tr>
+        <tr><td>변이 취약성</td><td>Spike 변이에 민감</td><td>활성부위 <b>보존성 높음</b></td></tr>
+        <tr><td>약물 선택성</td><td>—</td><td><b>높음</b></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <h2 class="sec" style="margin-top:26px">플랫폼이 하는 일</h2>
+  <div class="grid g3">
+    <div class="card"><h3>🧠 결합 예측</h3><p>Mpro + 후보 리간드 복합체를 AlphaFold3 스타일로 예측하고 <b>seed 앙상블</b>로 신뢰도(ipTM/pTM)를 산출합니다.</p></div>
+    <div class="card"><h3>🔁 분자 최적화 루프</h3><p>승인 저해제(Nirmatrelvir·Ensitrelvir·GC376) 벤치마크 대비 후보를 <b>결합·선택성·drug-likeness</b>로 반복 랭킹.</p></div>
+    <div class="card"><h3>💨 비강 전달 설계</h3><p>점막 체류·투과성·화학 안정성·입자크기·PK/PD를 <b>정량 스코어카드</b>로 최적화.</p></div>
+  </div>
+</section>
+
+<!-- ================= PIPELINE ================= -->
+<section id="pipeline">
+  <h2 class="sec">Agentic AI 파이프라인 — 대회 4개 영역에 정렬</h2>
+  <p class="lead">제4회 JUMP AI 테마 <b>"신약개발 단계별 특화 에이전틱 AI"</b>에 맞춰, 각 단계를 자율 에이전트로 구성했습니다.
+  각 에이전트는 도구(AlphaFold3·도킹·물성예측·문헌검색)를 호출하고 결과를 다음 단계로 전달합니다.</p>
+
+  <div class="flow">
+    <div class="node"><div class="ag">AGENT 1</div><h4>가설 생성·타겟 선정</h4><p>왜 Mpro·비강인가를 문헌·구조 근거로 자율 검증</p><div class="area">▸ 자율 가설생성·검증</div></div>
+    <div class="node"><div class="ag">AGENT 2</div><h4>구조·결합 예측</h4><p>Mpro(His41-Cys145)+리간드 복합체 · seed 앙상블 신뢰도</p><div class="area">▸ 도구기반 최적화 루프</div></div>
+    <div class="node"><div class="ag">AGENT 3</div><h4>분자 최적화</h4><p>결합·선택성·ADMET 반복 랭킹, 신규 스캐폴드 제안</p><div class="area">▸ 도구기반 최적화 루프</div></div>
+    <div class="node"><div class="ag">AGENT 4</div><h4>비강 제형 설계</h4><p>점막 체류·투과·안정성·입자크기·PK/PD 스코어링</p><div class="area">▸ 융합(제제·전달)</div></div>
+    <div class="node"><div class="ag">AGENT 5</div><h4>규제·임상 설계</h4><p>동물모델·국소독성 비임상→임상 경로 자동 초안</p><div class="area">▸ 규제·지능형 임상</div></div>
+  </div>
+
+  <div class="grid g2" style="margin-top:18px">
+    <div class="card">
+      <h3>🧩 AlphaFold3 신뢰도 향상 전략</h3>
+      <p>알파폴드팀이 확인한 <b>항체-항원 저정확도</b> 문제를 리간드-단백질 복합체로 우회합니다.</p>
+      <ul class="tick">
+        <li>다중 <b>seed 앙상블</b>(예: 10~50 seed) 후 ipTM·PAE 상위 포즈 채택</li>
+        <li>활성부위(S1/S1'/S2 포켓) <b>포즈 일관성</b>으로 필터링</li>
+        <li>공유결합 warhead(니트릴/알데하이드)는 Cys145 근접도로 보정</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🛠️ 사용 도구 스택 (개념)</h3>
+      <table>
+        <tr><th>단계</th><th>도구</th></tr>
+        <tr><td>구조·복합체</td><td>AlphaFold3 / Boltz / 도킹(Vina·Gnina)</td></tr>
+        <tr><td>물성·ADMET</td><td>RDKit · admet-ai · QED/Lipinski</td></tr>
+        <tr><td>생성·최적화</td><td>REINVENT류 생성모델 · scaffold hopping</td></tr>
+        <tr><td>에이전트</td><td>LLM tool-calling 오케스트레이션(daker.ai)</td></tr>
+      </table>
+    </div>
+  </div>
+  <p class="note">데이터사이언스 방법론(EDA→피처엔지니어링→모델링→<b>설명가능 AI</b>)을 결합·랭킹 전 과정에 적용해, 각 점수의 근거를 투명하게 제시합니다.</p>
+</section>
+
+<!-- ================= SIMULATOR ================= -->
+<section id="sim">
+  <h2 class="sec">Mpro 저해제 결합 예측 & 비강전달 적합성 시뮬레이터</h2>
+  <p class="lead">후보 리간드를 고르거나 물성을 조절하면, <b>예측 결합점수 · AF3 신뢰도 · 비강전달 적합성 · Drug-likeness</b>를
+  실시간 계산해 <b>Agentic 종합점수</b>로 통합합니다. <span style="color:var(--amber)">※ 개념 검증용 예측 모델(투명 공식) — 실험값 아님.</span></p>
+
+  <div class="simwrap">
+    <div class="card">
+      <h3>후보 리간드</h3>
+      <div class="ligbtns" id="ligbtns">
+        <button class="ligbtn active" data-l="nirmatrelvir">Nirmatrelvir</button>
+        <button class="ligbtn" data-l="ensitrelvir">Ensitrelvir</button>
+        <button class="ligbtn" data-l="gc376">GC376</button>
+        <button class="ligbtn" data-l="custom">Custom 후보</button>
+      </div>
+      <p class="foot" id="ligNote">경구 승인(Paxlovid), 니트릴 warhead → Cys145 공유결합.</p>
+
+      <div class="control"><label>분자량 MW <b id="mwv">499</b> Da</label><input type="range" id="mw" min="200" max="800" step="1" value="499"></div>
+      <div class="control"><label>친유성 logP <b id="lpv">1.9</b></label><input type="range" id="lp" min="-1" max="6" step="0.1" value="1.9"></div>
+      <div class="control"><label>수소결합 공여자 HBD <b id="hbdv">3</b></label><input type="range" id="hbd" min="0" max="8" step="1" value="3"></div>
+      <div class="control"><label>회전가능결합 RotB <b id="rbv">7</b></label><input type="range" id="rb" min="0" max="15" step="1" value="7"></div>
+      <div class="control"><label>공유결합 warhead <b id="cvv">있음</b></label><input type="range" id="cv" min="0" max="1" step="1" value="1"></div>
+
+      <h3 style="margin-top:16px">비강 제형 파라미터</h3>
+      <div class="control"><label>점막부착(mucoadhesion) <b id="muv">60</b>%</label><input type="range" id="mu" min="0" max="100" step="1" value="60"></div>
+      <div class="control"><label>투과증진제 <b id="pev">50</b>%</label><input type="range" id="pe" min="0" max="100" step="1" value="50"></div>
+      <div class="control"><label>분무 입자크기 <b id="psv">40</b> µm</label><input type="range" id="ps" min="5" max="120" step="1" value="40"></div>
+      <div class="control"><label>제형 pH <b id="phv">5.5</b></label><input type="range" id="ph" min="4" max="7.5" step="0.1" value="5.5"></div>
+    </div>
+
+    <div>
+      <div class="grid g2">
+        <div class="card kpi"><span class="lbl">예측 Mpro 결합점수 (pIC50 유사)</span><span class="num teal" id="oBind">–</span><div class="meter"><i id="mBind" style="background:linear-gradient(90deg,var(--teal),var(--accent))"></i></div></div>
+        <div class="card kpi"><span class="lbl">AF3 복합체 신뢰도 (ipTM, 예시)</span><span class="num ind" id="oConf">–</span><div class="meter"><i id="mConf" style="background:linear-gradient(90deg,var(--indigo),var(--accent))"></i></div></div>
+        <div class="card kpi"><span class="lbl">비강전달 적합성</span><span class="num amb" id="oNasal">–</span><div class="meter"><i id="mNasal" style="background:linear-gradient(90deg,var(--amber),#fbbf24)"></i></div></div>
+        <div class="card kpi"><span class="lbl">Drug-likeness (QED 유사)</span><span class="num grn" id="oQed">–</span><div class="meter"><i id="mQed" style="background:linear-gradient(90deg,var(--green),var(--teal))"></i></div></div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="split">
+          <div>
+            <h3>🧭 Agentic 종합점수</h3>
+            <div class="scorebig" id="oTotal">–</div>
+            <div class="verdict" id="verdict">—</div>
+          </div>
+          <div>
+            <h3>4대 축 프로파일</h3>
+            <canvas id="chart" width="440" height="240" aria-label="점수 막대차트"></canvas>
+          </div>
+        </div>
+        <p class="foot">종합 = 결합 35% · 신뢰도 20% · 비강적합성 30% · Drug-likeness 15% (가중합, 대회 목적 최적화 반영).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SCREENING ================= -->
+<section id="screen">
+  <h2 class="sec">후보 저해제 스크리닝 — 벤치마크 & 랭킹</h2>
+  <p class="lead">임상/전임상 Mpro 저해제를 기준으로 후보를 정렬합니다. 아래 표는 자동 계산되는 종합점수로 실시간 랭킹됩니다.</p>
+  <div class="card"><table id="rankTbl">
+    <thead><tr><th>#</th><th>후보</th><th>유형</th><th>결합</th><th>신뢰도</th><th>비강</th><th>QED</th><th>종합</th><th>비고</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+  <div class="grid g3" style="margin-top:16px">
+    <div class="card"><h3>Nirmatrelvir</h3><p>Paxlovid 핵심 성분. 니트릴 warhead 공유결합. <b>경구·ritonavir 병용</b> → 약물상호작용 이슈.</p></div>
+    <div class="card"><h3>Ensitrelvir</h3><p>Xocova(시오노기). <b>비공유·단일제</b>, ritonavir 불필요. 일본·싱가포르 승인, FDA fast-track.</p></div>
+    <div class="card"><h3>GC376</h3><p>알데하이드계 공유 저해제(전임상·수의). 광범위 코로나바이러스 Mpro 활성.</p></div>
+  </div>
+  <p class="note">내성 관련: E166V·L50F(nirmatrelvir), E166H 등 활성부위 변이가 보고됨 → 신규 후보는 <b>내성 변이 대비 견고성</b>을 평가지표에 포함 권장.</p>
+</section>
+
+<!-- ================= NASAL ================= -->
+<section id="nasal">
+  <h2 class="sec">비강 스프레이 개발 고려사항 — 체크리스트 & 게이트</h2>
+  <p class="lead">홍성현 대표 멘토링에서 제시한 개발 고려사항을 개발 게이트로 구조화했습니다.</p>
+  <div class="grid g2">
+    <div class="card"><h3>💧 전달·제형</h3>
+      <ul class="tick">
+        <li>충분한 <b>비강 점막 체류시간</b> (점막부착성 고분자·겔화)</li>
+        <li><b>점막 투과성</b> 향상 (투과증진제·나노/리포좀 캐리어)</li>
+        <li>약물 <b>화학적 안정성</b> (pH·효소분해·보관)</li>
+        <li>적절한 <b>분무 입자크기</b> 및 제형 최적화 (비강 침착 최적 ~30–50 µm)</li>
+      </ul>
+    </div>
+    <div class="card"><h3>🔬 비임상·검증</h3>
+      <ul class="tick">
+        <li><b>동물모델</b> (감염 챌린지·비강 투여 효능)</li>
+        <li><b>국소 독성·점막 자극성</b> 평가</li>
+        <li><b>약동학(PK)·약력학(PD)</b> 검증 (비강 국소 노출 vs 전신)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h3>개발 게이트 로드맵</h3>
+    <div class="tl">
+      <div class="it"><div class="d">Gate 0 · In silico</div><div class="t">AF3 결합예측 + 도킹 + ADMET 스크리닝 → 후보 확정 <span class="badge">본 플랫폼 범위</span></div></div>
+      <div class="it"><div class="d">Gate 1 · In vitro</div><div class="t">Mpro 효소저해(IC50)·세포 항바이러스·세포독성 · 점막세포 투과 <span class="badge warn">차기</span></div></div>
+      <div class="it"><div class="d">Gate 2 · 제형</div><div class="t">비강 스프레이 제형화·입자크기·안정성·점막부착 최적화</div></div>
+      <div class="it"><div class="d">Gate 3 · In vivo</div><div class="t">동물 감염모델 효능·PK/PD·국소독성·점막 자극성</div></div>
+      <div class="it"><div class="d">Gate 4 · 규제</div><div class="t">비임상 패키지 → IND/임상1상 설계 (에이전트 자동 초안)</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= COMPETITION ================= -->
+<section id="comp">
+  <h2 class="sec">제4회 AI 신약개발 경진대회 (4th JUMP AI) — 출전 전략</h2>
+  <div class="grid g4">
+    <div class="card kpi"><span class="num ind">보건복지부</span><span class="lbl">주최 · 주관 한국보건산업진흥원</span></div>
+    <div class="card kpi"><span class="num teal">Agentic AI</span><span class="lbl">테마: 단계별 특화 에이전틱 AI 설계·구현</span></div>
+    <div class="card kpi"><span class="num amb">~8/7</span><span class="lbl">예선 마감 · 본선 9/7–10/2 · 수상 11/6</span></div>
+    <div class="card kpi"><span class="num grn">최대 3인</span><span class="lbl">개인·팀 · 총상금 3,350만 · 대상 장관상+1,000만</span></div>
+  </div>
+
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card">
+      <h3>🗺️ 대회 4개 영역 ↔ 우리 플랫폼</h3>
+      <table>
+        <tr><th>대회 영역</th><th>본 프로젝트 대응</th></tr>
+        <tr><td>자율 가설생성·검증</td><td>Agent1: Mpro·비강 타겟 논리 자율 검증</td></tr>
+        <tr><td>도구기반 분자 최적화 루프</td><td>Agent2·3: AF3+도킹+ADMET 반복 랭킹</td></tr>
+        <tr><td>규제·지능형 임상 설계</td><td>Agent5: 비임상→임상 경로 자동 초안</td></tr>
+        <tr><td>융합</td><td>Agent4: 비강 제형·전달 융합 설계</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>✅ 1안 vs 2안 — 멘토 피드백 반영</h3>
+      <p><b>결론: 두 안을 하나로 통합.</b> 변경된 'Mpro 리간드 결합 예측' 프로젝트 <b>자체를</b> 경진대회 에이전틱 AI로 제출하는 것이 최적.</p>
+      <ul class="tick">
+        <li>1안(Mpro 프로젝트)이 곧 2안(대회 과제)의 콘텐츠가 됨 — 중복 제거</li>
+        <li>"넥스트 코로나 대비" 정책 관심 → 사회적 임팩트 서사 확보</li>
+        <li>daker.ai 플랫폼 특성상 <b>작동하는 에이전틱 데모</b>가 강점 (본 프로토타입 활용)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>📋 예선 제출 체크리스트 (초안)</h3>
+    <div class="split">
+      <ul class="tick">
+        <li>문제 정의: Mpro 저해 기반 비강 항바이러스 (넥스트 코로나 대비)</li>
+        <li>에이전틱 아키텍처 다이어그램 (Agent1–5)</li>
+        <li>AF3 리간드 복합체 예측 파이프라인 + seed 앙상블 신뢰도</li>
+      </ul>
+      <ul class="tick">
+        <li>후보 스크리닝·랭킹 결과 (벤치마크 대비)</li>
+        <li>비강 제형·비임상 계획 (개발 게이트)</li>
+        <li>작동 데모 (본 플랫폼) + 재현 코드/노트북</li>
+      </ul>
+    </div>
+    <p class="foot">팀: 알파폴드팀(팀장 국경희, 아시아경제교육센터) · 멘토: 홍성현(클리켐바이오) · 참조: 아시아경제(hjyu) · 데이터사이언스 멘토링 방법론(염성웅) 적용.</p>
+  </div>
+  <p class="foot" style="margin-top:10px">대회 링크: <a href="https://daker.ai/public/hackathons/4th-jump-ai-agentic-drug-challenge" target="_blank" rel="noopener">daker.ai · 4th JUMP AI Agentic Drug Challenge</a></p>
+</section>
+
+<div class="disc">
+  ⚠️ <b>고지</b> — 본 플랫폼은 <b>개념 검증(v1) 프로토타입</b>입니다. 결합점수·신뢰도·적합성은 투명한 휴리스틱 공식으로 산출한 <b>예시 예측값</b>이며 실험/임상 데이터가 아닙니다.
+  실제 대회 제출에는 AlphaFold3·도킹·ADMET 도구의 실측 파이프라인 연동이 필요합니다. 근거: 홍성현 대표 멘토링 이메일(2026-07-07) · 제4회 JUMP AI 공고 · Mpro 저해제 문헌.
+</div>
+
+</div></main>
+
+<script>
+// ---------- tabs ----------
+document.getElementById('tabrow').addEventListener('click',e=>{
+  const b=e.target.closest('.tab'); if(!b)return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+  b.classList.add('active');
+  document.getElementById(b.dataset.t).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+
+// ---------- ligand presets (approx, illustrative) ----------
+const LIG = {
+  nirmatrelvir:{mw:499,lp:1.9,hbd:3,rb:7,cv:1,note:'경구 승인(Paxlovid), 니트릴 warhead → Cys145 공유결합.'},
+  ensitrelvir :{mw:531,lp:2.5,hbd:1,rb:5,cv:0,note:'Xocova(시오노기), 비공유·단일제, ritonavir 불필요.'},
+  gc376       :{mw:507,lp:1.2,hbd:4,rb:8,cv:1,note:'알데하이드계 공유 저해제(전임상·수의).'},
+  custom      :{mw:380,lp:2.2,hbd:2,rb:6,cv:0,note:'사용자 정의 후보 — 슬라이더로 물성 탐색.'}
+};
+let cur='nirmatrelvir';
+const $=id=>document.getElementById(id);
+const ids=['mw','lp','hbd','rb','cv','mu','pe','ps','ph'];
+
+function setLig(l){
+  cur=l;
+  document.querySelectorAll('.ligbtn').forEach(b=>b.classList.toggle('active',b.dataset.l===l));
+  const d=LIG[l];
+  $('mw').value=d.mw; $('lp').value=d.lp; $('hbd').value=d.hbd; $('rb').value=d.rb; $('cv').value=d.cv;
+  $('ligNote').textContent=d.note;
+  compute();
+}
+document.getElementById('ligbtns').addEventListener('click',e=>{
+  const b=e.target.closest('.ligbtn'); if(b) setLig(b.dataset.l);
+});
+ids.forEach(i=>$(i).addEventListener('input',()=>{ if(cur!=='custom' && ['mw','lp','hbd','rb','cv'].includes(i)){cur='custom';document.querySelectorAll('.ligbtn').forEach(b=>b.classList.toggle('active',b.dataset.l==='custom'));$('ligNote').textContent=LIG.custom.note;} compute();}));
+
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+function gauss(x,mu,s){return Math.exp(-((x-mu)*(x-mu))/(2*s*s));}
+
+function compute(){
+  const mw=+$('mw').value, lp=+$('lp').value, hbd=+$('hbd').value, rb=+$('rb').value, cv=+$('cv').value;
+  const mu=+$('mu').value, pe=+$('pe').value, ps=+$('ps').value, ph=+$('ph').value;
+  // reflect labels
+  $('mwv').textContent=mw; $('lpv').textContent=lp.toFixed(1); $('hbdv').textContent=hbd;
+  $('rbv').textContent=rb; $('cvv').textContent=cv?'있음':'없음';
+  $('muv').textContent=mu; $('pev').textContent=pe; $('psv').textContent=ps; $('phv').textContent=ph.toFixed(1);
+
+  // --- Binding (pIC50-like 4~9) : covalent + fit to Mpro S1 pocket (MW 450~550, logP 1~3) ---
+  let bind = 5.2 + cv*1.4 + 1.6*gauss(mw,500,120) + 1.3*gauss(lp,2.0,1.4) - 0.05*Math.max(0,rb-8);
+  bind = clamp(bind,3.5,9.2);
+  // --- AF3 ipTM (0.55~0.92) : rigidity(low RotB) + reasonable size ---
+  let conf = 0.6 + 0.16*gauss(rb,4,4) + 0.12*gauss(mw,500,180) - 0.02*Math.abs(lp-2);
+  conf = clamp(conf,0.5,0.93);
+  // --- Nasal delivery (0~100): small MW, moderate logP, particle 30-50µm, mucoadhesion, permeation, near pH5.5, covalent less stable ---
+  let nasal = 100*(0.30*gauss(mw,380,150) + 0.20*gauss(lp,2.2,1.6) + 0.20*gauss(ps,40,22)
+              + 0.15*(mu/100) + 0.10*(pe/100) + 0.05*gauss(ph,5.5,1.0)) - cv*4;
+  nasal = clamp(nasal,0,100);
+  // --- QED-like drug-likeness (Lipinski-ish) ---
+  let qed = 100*(0.4*gauss(mw,360,140) + 0.3*gauss(lp,2.3,1.8) + 0.2*(hbd<=5?1:0.4) + 0.1*gauss(rb,6,4));
+  qed = clamp(qed,0,100);
+
+  const bindPct = (bind-3.5)/(9.2-3.5)*100;
+  const confPct = conf*100;
+  // composite (weights tuned for competition objective)
+  const total = 0.35*bindPct + 0.20*confPct + 0.30*nasal + 0.15*qed;
+
+  $('oBind').textContent=bind.toFixed(2); $('mBind').style.width=bindPct.toFixed(0)+'%';
+  $('oConf').textContent=conf.toFixed(2); $('mConf').style.width=confPct.toFixed(0)+'%';
+  $('oNasal').textContent=Math.round(nasal); $('mNasal').style.width=nasal.toFixed(0)+'%';
+  $('oQed').textContent=Math.round(qed); $('mQed').style.width=qed.toFixed(0)+'%';
+  $('oTotal').textContent=Math.round(total);
+
+  let v,color;
+  if(total>=75){v='✅ <b>유망 후보</b> — 결합·비강전달 균형 우수. 최적화 루프로 진입 권장.';color='var(--green)';}
+  else if(total>=60){v='🟡 <b>보완 필요</b> — 한 축(결합/신뢰도/전달)이 약함. 슬라이더로 병목 확인.';color='var(--amber)';}
+  else {v='🔴 <b>부적합</b> — 다중 축 미달. 스캐폴드/제형 재설계 필요.';color='var(--rose)';}
+  const vd=$('verdict'); vd.innerHTML=v; vd.style.borderColor=color;
+
+  drawChart([bindPct,confPct,nasal,qed]);
+  updateRank();
+}
+
+// ---------- bar chart on canvas ----------
+function drawChart(vals){
+  const c=$('chart'), x=c.getContext('2d');
+  const W=c.width,H=c.height; x.clearRect(0,0,W,H);
+  const labels=['결합','신뢰도','비강','QED'];
+  const colors=['#2dd4bf','#818cf8','#f59e0b','#34d399'];
+  const pad=34, bw=64, gap=(W-pad*2-bw*4)/3, base=H-26;
+  x.strokeStyle='#22304d'; x.lineWidth=1;
+  for(let g=0;g<=100;g+=25){const y=26+(base-26)*(1-g/100);x.beginPath();x.moveTo(pad,y);x.lineTo(W-pad,y);x.stroke();
+    x.fillStyle='#6f82a6';x.font='10px Segoe UI';x.fillText(g,4,y+3);}
+  vals.forEach((v,i)=>{
+    const bx=pad+i*(bw+gap), bh=(base-26)*(v/100), by=base-bh;
+    const grd=x.createLinearGradient(0,by,0,base); grd.addColorStop(0,colors[i]); grd.addColorStop(1,colors[i]+'55');
+    x.fillStyle=grd; roundRect(x,bx,by,bw,bh,6); x.fill();
+    x.fillStyle='#e8eefc';x.font='bold 13px Segoe UI';x.textAlign='center';x.fillText(Math.round(v),bx+bw/2,by-6);
+    x.fillStyle='#9fb0d0';x.font='12px Segoe UI';x.fillText(labels[i],bx+bw/2,base+16);
+    x.textAlign='left';
+  });
+}
+function roundRect(x,X,Y,W,H,r){r=Math.min(r,H/2||0);x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+W,Y,X+W,Y+H,r);x.arcTo(X+W,Y+H,X,Y+H,r);x.arcTo(X,Y+H,X,Y,r);x.arcTo(X,Y,X+W,Y,r);x.closePath();}
+
+// ---------- ranking table ----------
+function scoreOf(d,form){
+  const {mw,lp,hbd,rb,cv}=d; const {mu,pe,ps,ph}=form;
+  let bind=5.2+cv*1.4+1.6*gauss(mw,500,120)+1.3*gauss(lp,2.0,1.4)-0.05*Math.max(0,rb-8);bind=clamp(bind,3.5,9.2);
+  let conf=0.6+0.16*gauss(rb,4,4)+0.12*gauss(mw,500,180)-0.02*Math.abs(lp-2);conf=clamp(conf,0.5,0.93);
+  let nasal=100*(0.30*gauss(mw,380,150)+0.20*gauss(lp,2.2,1.6)+0.20*gauss(ps,40,22)+0.15*(mu/100)+0.10*(pe/100)+0.05*gauss(ph,5.5,1.0))-cv*4;nasal=clamp(nasal,0,100);
+  let qed=100*(0.4*gauss(mw,360,140)+0.3*gauss(lp,2.3,1.8)+0.2*(hbd<=5?1:0.4)+0.1*gauss(rb,6,4));qed=clamp(qed,0,100);
+  const bindPct=(bind-3.5)/(9.2-3.5)*100, confPct=conf*100;
+  const total=0.35*bindPct+0.20*confPct+0.30*nasal+0.15*qed;
+  return {bind,conf,nasal,qed,total};
+}
+const CAND=[
+  {k:'Nirmatrelvir',type:'공유(니트릴)',d:LIG.nirmatrelvir,note:'경구·ritonavir 병용'},
+  {k:'Ensitrelvir',type:'비공유·단일제',d:LIG.ensitrelvir,note:'ritonavir 불필요'},
+  {k:'GC376',type:'공유(알데하이드)',d:LIG.gc376,note:'전임상·수의'},
+  {k:'Custom 후보',type:'사용자정의',d:LIG.custom,note:'탐색용'}
+];
+function updateRank(){
+  const form={mu:+$('mu').value,pe:+$('pe').value,ps:+$('ps').value,ph:+$('ph').value};
+  const rows=CAND.map(c=>({...c,s:scoreOf(c.d,form)})).sort((a,b)=>b.s.total-a.s.total);
+  const tb=document.querySelector('#rankTbl tbody'); tb.innerHTML='';
+  rows.forEach((r,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${i+1}</td><td><b>${r.k}</b></td><td>${r.type}</td>
+      <td>${r.s.bind.toFixed(2)}</td><td>${r.s.conf.toFixed(2)}</td><td>${Math.round(r.s.nasal)}</td>
+      <td>${Math.round(r.s.qed)}</td><td><b style="color:var(--teal)">${Math.round(r.s.total)}</b></td><td style="color:var(--mut)">${r.note}</td>`;
+    tb.appendChild(tr);
+  });
+}
+setLig('nirmatrelvir');
+</script>
+</body>
+</html>

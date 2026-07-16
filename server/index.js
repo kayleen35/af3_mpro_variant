@@ -169,12 +169,26 @@ app.post('/api/analysis/:jobId/predict', async (req, res) => {
 
   // 선택된 억제제들에 대해 초기 메타데이터 구성
   const nameMap = {
-    nirmatrelvir: 'Nirmatrelvir (PF-07321332)',
-    ensitrelvir: 'Ensitrelvir (S-217622)',
-    leritrelvir: 'Leritrelvir (RAY1216)',
-    gc376: 'GC376 (Broad-spectrum protease inhibitor)',
-    compound4: 'Compound 4 (Experimental Mpro Binder)',
+    // 공유결합 (Covalent)
+    nirmatrelvir:    'Nirmatrelvir (PF-07321332)',
+    ibuzatrelvir:    'Ibuzatrelvir (PF-07817883)',
+    simnotrelvir:    'Simnotrelvir (SIM0417)',
+    leritrelvir:     'Leritrelvir (RAY1216)',
+    pomotrelvir:     'Pomotrelvir (PBI-0451)',
+    gc376:           'GC376',
+    pf00835231:      'PF-00835231',
+    boceprevir:      'Boceprevir',
+    bofutrelvir:     'Bofutrelvir (FB2001)',
+    // 비공유결합 (Non-covalent)
+    ensitrelvir:     'Ensitrelvir (S-217622)',
+    x77:             'X77 (6W63)',
+    ml188:           'ML188 (7L0D)',
+    mat_pos_e194df51:'MAT-POS-e194df51-1',
+    mat_pos_b3e365b9:'MAT-POS-b3e365b9-1',
+    secutrelvir:     'Secutrelvir (S-892216)',
+    olgotrelvir:     'Olgotrelvir',
   };
+
 
   job.inhibitors = (inhibitorIds || []).map((id) => ({
     inhibitorId: id,
@@ -211,8 +225,9 @@ app.post('/api/analysis/:jobId/predict', async (req, res) => {
     console.log(`[AF3 Engine Info] predict request sent to WSL engine (may have timed out, but job continues in background).`);
   }
 
-  // WSL output 폴더에서 이 jobId 전용 결과를 polling (최대 2시간, 15초 간격)
-  const MAX_POLLS = 480;  // 480 * 15s = 2시간
+  // WSL output 폴더에서 이 jobId 전용 결과를 polling
+  // 16종 억제제는 수 시간 소요 가능 → 최대 12시간 대기
+  const MAX_POLLS = 2880;  // 2880 * 15s = 12시간
   const POLL_INTERVAL = 15000;
 
   // AF3 summary_confidences.json → UI metrics 변환 (실제 AF3 출력값 직접 사용)
@@ -308,8 +323,12 @@ app.post('/api/analysis/:jobId/predict', async (req, res) => {
         }
 
         // 하나 이상 완료되었지만 나머지 진행 중
+        // (완료된 억제제가 절반 이상이면 partial_completed로 표시)
         if (completedCount > 0) {
-          j.status = `predicting_${completedCount}_of_${expectedInhibitorIds.length}`;
+          const ratio = completedCount / expectedInhibitorIds.length;
+          j.status = ratio >= 0.5
+            ? `partial_completed_${completedCount}_of_${expectedInhibitorIds.length}`
+            : `predicting_${completedCount}_of_${expectedInhibitorIds.length}`;
         }
       } catch (e) {
         // WSL 엔진 응답 실패 - 계속 polling
@@ -320,10 +339,11 @@ app.post('/api/analysis/:jobId/predict', async (req, res) => {
       await new Promise((r) => setTimeout(r, POLL_INTERVAL));
     }
 
-    // 시간 초과
+    // 시간 초과 (12시간 초과 시에만)
     j.status = 'timeout';
     j.updatedAt = new Date().toISOString();
-    console.log(`[AF3 Engine] ⚠️ Timeout waiting for ${jobId}`);
+    console.log(`[AF3 Engine] ⚠️ Timeout (12h exceeded) waiting for ${jobId}`);
+    console.log(`[AF3 Engine] 💡 완료된 억제제 수: ${j.inhibitors.filter(i => i.status === 'completed').length}/${j.inhibitors.length}`);
   };
 
   // 비동기로 polling 시작 (응답은 즉시 반환)

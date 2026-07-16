@@ -47,11 +47,13 @@ export const startPrediction = async (
   inhibitorIds: string[],
   options?: { fullInference?: boolean; seed?: number }
 ): Promise<AnalysisJob> => {
+  // 예측 시작 POST는 즉시 응답을 받아야 하므로 전용 timeout 사용
+  // (전역 30초보다 길게 설정해 타임아웃으로 인한 UI 복귀 방지)
   const response = await client.post<AnalysisJob>(`/api/analysis/${jobId}/predict`, {
     inhibitorIds,
     fullInference: options?.fullInference || false,
     seed: options?.seed,
-  });
+  }, { timeout: 60000 }); // 60초
   return response.data;
 };
 

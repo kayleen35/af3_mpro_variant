@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.json">
+  <title>NasalMpro</title>
+  <style>
+    :root{--bg:#f6f8f7;--panel:#fff;--ink:#14211f;--muted:#65736f;--line:#dce5e1;--brand:#0f766e;--brand2:#2563eb;--warn:#b45309;--bad:#b91c1c;--good:#047857;--purple:#7c3aed}
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+    header{background:#0b3b39;color:#fff;padding:22px 18px 20px;border-bottom:5px solid #17a58f}
+    .wrap{max-width:1160px;margin:0 auto}.top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap}
+    h1{font-size:clamp(23px,3.6vw,36px);line-height:1.12;margin:0 0 10px;letter-spacing:0}.context{margin:0;color:#cde8e3;max-width:760px}
+    .platnav{display:flex;gap:8px;margin:0 0 14px;flex-wrap:wrap}
+    .platnav a{font-size:13px;font-weight:800;text-decoration:none;padding:7px 13px;border-radius:999px;border:1px solid #2a6f68;color:#bfeee6}
+    .platnav a.on{background:#17a58f;color:#04231f;border-color:#17a58f}
+    .badge{display:inline-flex;gap:7px;align-items:center;background:#e9fffa;color:#064e3b;border-radius:999px;padding:7px 10px;font-size:13px;font-weight:800;margin:3px 0}
+    main{padding:18px}.grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(310px,.95fr);gap:16px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+    label{display:block;font-weight:800;margin-bottom:8px}.inputrow{display:flex;gap:8px}.inputrow input{flex:1}
+    input,textarea{width:100%;border:1px solid #b9c8c3;border-radius:8px;padding:11px 12px;font:inherit;background:#fff;color:var(--ink)} textarea{min-height:150px;resize:vertical}
+    button{border:0;border-radius:8px;background:var(--brand);color:white;font-weight:800;padding:11px 14px;cursor:pointer;font:inherit}button.secondary{background:#e7efed;color:#143b36}button.blue{background:var(--brand2)}button.purple{background:var(--purple)}button:disabled{opacity:.55;cursor:not-allowed}
+    .modebar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:0 0 14px}.seg{display:inline-flex;border:1px solid #aac0ba;border-radius:8px;overflow:hidden;background:#eef5f2}.seg button{border-radius:0;background:transparent;color:#143b36}.seg button.active{background:#143b36;color:#fff}
+    .presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.tabs{display:flex;gap:8px;margin:16px 0;flex-wrap:wrap}.tab{background:#e7efed;color:#143b36}.tab.active{background:#143b36;color:#fff}.hidden{display:none!important}
+    .status{display:flex;align-items:center;gap:10px;color:var(--muted);font-weight:700}.spin{width:18px;height:18px;border:3px solid #cde8e3;border-top-color:#0f766e;border-radius:50%;animation:rot 1s linear infinite}@keyframes rot{to{transform:rotate(360deg)}}
+    .heroScore{display:grid;grid-template-columns:180px 1fr;gap:14px;align-items:center;margin:10px 0 14px}.big{font-size:52px;line-height:1;font-weight:900;color:#0b3b39}.sub{font-size:15px;color:var(--muted);font-weight:700}.verdict{font-weight:900;font-size:20px}.good{color:var(--good)}.mid{color:var(--warn)}.bad{color:var(--bad)}
+    .molbox{min-height:240px;display:flex;align-items:center;justify-content:center;background:#fbfdfc;border:1px dashed #c7d5d0;border-radius:8px;overflow:auto}.molbox svg{max-width:100%;height:auto}.chart{width:100%;height:190px}
+    table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{color:#38524d;background:#f3f7f5}th.sortable{cursor:pointer;user-select:none}td.num{text-align:right;font-variant-numeric:tabular-nums}td a{color:#0f5fba;font-weight:800;text-decoration:none}
+    .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.metric,.infoCard{border:1px solid var(--line);border-radius:8px;padding:12px;background:#fbfdfc}.metric b{display:block;font-size:22px}.metric span,.small{color:var(--muted);font-size:13px}
+    .rankActions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.tablewrap{overflow:auto;max-height:540px;border:1px solid var(--line);border-radius:8px}.tablewrap table{min-width:900px}footer{color:#6b4b16;background:#fff7ed;border-top:1px solid #fed7aa;padding:14px 18px;margin-top:16px}
+    .err{background:#fff1f2;color:#9f1239;border:1px solid #fecdd3;border-radius:8px;padding:10px;margin-top:10px;white-space:pre-wrap}
+    .libraryHead{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}.libraryHead p{margin:0;font-weight:800}.filter{max-width:360px}
+    .summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}.summary b{display:block;margin-bottom:4px}
+    .projectGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.projectGrid .wide{grid-column:1 / -1}.infoCard h2{margin:0 0 10px;font-size:21px}.infoCard h3{margin:12px 0 6px;font-size:16px}.infoCard p{margin:0 0 8px;line-height:1.55}.infoCard ul{margin:0;padding-left:20px;line-height:1.7}.checklist{list-style:none!important;padding-left:0!important}.checklist li{padding:7px 0 7px 30px;position:relative;border-bottom:1px solid #e5eee9}.checklist li:before{content:"✓";position:absolute;left:0;top:7px;color:#047857;font-weight:900}
+    .agent{border:1px solid var(--line);border-radius:10px;padding:0;margin:0 0 14px;overflow:hidden}.agent .ahead{display:flex;gap:10px;align-items:center;padding:12px 14px;background:#f0f7f5;border-bottom:1px solid var(--line)}.agent .ahead .n{width:26px;height:26px;border-radius:50%;background:#0b3b39;color:#fff;display:grid;place-items:center;font-weight:900;font-size:14px}.agent .ahead b{font-size:15px}.agent .ahead .tool{margin-left:auto;font-size:11.5px;font-weight:800;color:#155e52;background:#d7efe9;border:1px solid #b6ddd3;padding:3px 8px;border-radius:6px}.agent .abody{padding:12px 14px;font-size:14px;line-height:1.55}
+    .trajUp{color:var(--good);font-weight:800}.finalCard{border:2px solid #0f766e;border-radius:10px;padding:14px;background:#f0fbf8}.pill2{display:inline-block;font-size:12px;font-weight:800;background:#e7efed;color:#143b36;border-radius:999px;padding:3px 9px;margin:2px 4px 2px 0}
+    @media(max-width:850px){.grid,.projectGrid,.summary{grid-template-columns:1fr}.heroScore{grid-template-columns:1fr}.cards{grid-template-columns:1fr}.inputrow{flex-direction:column}.big{font-size:44px}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap top">
+      <div>
+        <div class="platnav">
+          <a href="index.html" class="on">🧪 NasalMpro · Mpro/비강</a>
+          <a href="albumin.html">🧬 ALBOMB · 당화알부민/AKI</a>
+        </div>
+        <h1>NasalMpro · 코로나바이러스 Mpro 비강 스프레이 후보 평가</h1>
+        <p class="context">RDKit-WASM + ML QSAR로 임의 분자의 <b>Mpro 저해 활성(pIC50)을 실시간 예측</b>하고, 자율 에이전트가 후보를 최적화합니다. 오프라인 PWA.</p>
+      </div>
+      <div>
+        <div class="badge">오프라인 PWA</div><br>
+        <div class="badge">ML QSAR · pIC50 예측</div><br>
+        <div id="modeBadge" class="badge">활성 예측 ρ=0.76 (scaffold-CV)</div>
+      </div>
+    </div>
+  </header>
+  <main class="wrap">
+    <div id="loadState" class="panel status"><span class="spin"></span><span>RDKit · ML 모델 로딩 중...</span></div>
+    <div id="app" class="hidden">
+      <div class="modebar panel">
+        <div>
+          <strong>랭킹·정렬 기준</strong>
+          <div class="small">랭킹 탭과 실측 라이브러리 정렬에 적용됩니다. 단일 평가의 헤드라인은 항상 ML 예측 pIC50입니다.</div>
+        </div>
+        <div class="seg" role="group" aria-label="정렬 기준">
+          <button id="activityMode" class="active" type="button">활성 우선(예측 pIC50)</button>
+          <button id="balancedMode" type="button">균형(개발성 Composite)</button>
+        </div>
+        <div id="metricBadge" class="badge">Ridge QSAR ρ=0.76 · RandomForest ρ=0.81</div>
+      </div>
+      <div class="tabs">
+        <button id="singleTab" class="tab active">단일 평가</button>
+        <button id="rankTab" class="tab">랭킹 평가</button>
+        <button id="agentTab" class="tab">🤖 자율 에이전트</button>
+        <button id="libraryTab" class="tab">실측 라이브러리</button>
+        <button id="validationTab" class="tab">모델 검증</button>
+        <button id="projectTab" class="tab">프로젝트·대회</button>
+      </div>
+
+      <section id="singleView">
+        <div class="grid">
+          <div class="panel">
+            <label for="smilesInput">SMILES</label>
+            <div class="inputrow">
+              <input id="smilesInput" autocomplete="off" spellcheck="false" placeholder="예: CC(=O)Oc1ccccc1C(=O)O">
+              <button id="evalBtn">평가</button>
+            </div>
+            <div class="presets">
+              <button class="secondary preset" data-key="nirmatrelvir">Nirmatrelvir</button>
+              <button class="secondary preset" data-key="ensitrelvir">Ensitrelvir</button>
+              <button class="secondary preset" data-key="gc376">GC376</button>
+            </div>
+            <div id="errorBox" class="err hidden"></div>
+            <div class="heroScore">
+              <div>
+                <div id="predPic50" class="big">-</div>
+                <div class="sub">예측 pIC50 (ML QSAR)</div>
+                <div id="verdict" class="verdict">대기</div>
+              </div>
+              <canvas id="scoreChart" class="chart" width="620" height="220"></canvas>
+            </div>
+            <div class="cards">
+              <div class="metric"><b id="ic50est">-</b><span>추정 IC50 (nM, =10^(9-pIC50))</span></div>
+              <div class="metric"><b id="composite">-</b><span>Composite (개발성 종합)</span></div>
+              <div class="metric"><b id="nasalScore">-</b><span>비강 전달성</span></div>
+              <div class="metric"><b id="mproSim">-</b><span>강활성 100종 최대 유사도</span></div>
+              <div class="metric"><b id="qedScore">-</b><span id="qedLabel">QED</span></div>
+              <div class="metric"><b id="mproFit">-</b><span>Mpro 적합도</span></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div id="molSvg" class="molbox"><span class="small">분자 구조 SVG</span></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <h2>기술 지표</h2>
+          <table><tbody id="descTable"></tbody></table>
+        </div>
+      </section>
+
+      <section id="rankView" class="hidden">
+        <div class="panel">
+          <label for="bulkInput">다중 SMILES (한 줄에 하나)</label>
+          <textarea id="bulkInput" spellcheck="false"></textarea>
+          <div class="rankActions">
+            <button id="rankBtn" class="blue">랭킹 계산</button>
+            <button id="csvBtn" class="secondary" disabled>CSV 다운로드</button>
+          </div>
+          <div id="rankError" class="err hidden"></div>
+          <div class="tablewrap"><table><thead><tr><th>순위</th><th>SMILES</th><th id="rankScoreHead">예측 pIC50</th><th>판정</th><th>Composite</th><th>MW</th><th>logP</th><th>TPSA</th><th>유사도</th><th>비강</th><th>QED</th></tr></thead><tbody id="rankBody"></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="agentView" class="hidden">
+        <div class="panel">
+          <h2 style="margin-top:0">자율 에이전트 · 리드 최적화 파이프라인</h2>
+          <p class="small" style="margin-top:0">시드 분자를 입력하면 4개 에이전트가 순차적으로 <b>가설수립 → 활성평가(QSAR 도구) → 도구기반 분자 최적화 루프 → 규제·제형 판정</b>을 수행합니다. 제4회 JUMP AI 4개 영역을 그대로 구현한 오프라인 에이전틱 파이프라인입니다.</p>
+          <div class="inputrow">
+            <input id="agentSmiles" autocomplete="off" spellcheck="false" placeholder="시드 SMILES (예: GC376 또는 임의 리드)">
+            <button id="agentRunBtn" class="purple">자율 최적화 실행</button>
+          </div>
+          <div class="presets">
+            <button class="secondary agentPreset" data-key="gc376">GC376 시드</button>
+            <button class="secondary agentPreset" data-key="nirmatrelvir">Nirmatrelvir 시드</button>
+            <button class="secondary agentPreset" data-key="aspirin">약한 리드(Aspirin) 시드</button>
+          </div>
+          <div id="agentError" class="err hidden"></div>
+        </div>
+        <div id="agentOut"></div>
+      </section>
+
+      <section id="libraryView" class="hidden">
+        <div class="panel">
+          <div id="datasetSummaryLibrary" class="summary"></div>
+          <div class="libraryHead">
+            <p>실측 Mpro 라이브러리 상위 400종 · 클릭하여 정렬</p>
+            <input id="libraryFilter" class="filter" autocomplete="off" spellcheck="false" placeholder="ID, 출처 또는 SMILES 필터">
+          </div>
+          <div id="libraryError" class="err hidden"></div>
+          <div class="tablewrap">
+            <table>
+              <thead>
+                <tr>
+                  <th class="sortable" data-sort="id">ID</th>
+                  <th class="sortable" data-sort="src">출처</th>
+                  <th class="sortable" data-sort="pIC50">측정 pIC50</th>
+                  <th class="sortable" data-sort="MW">MW</th>
+                  <th class="sortable" data-sort="logP">logP</th>
+                  <th class="sortable" data-sort="similarity">유사도</th>
+                  <th class="sortable" data-sort="composite">Composite</th>
+                </tr>
+              </thead>
+              <tbody id="libraryBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="validationView" class="hidden">
+        <div class="panel">
+          <h2 style="margin-top:0">모델 검증 — 예측 pIC50 vs 실측 pIC50</h2>
+          <p class="small" style="margin-top:0">Murcko scaffold 기반 5-fold 교차검증의 out-of-fold 예측입니다(학습에 쓰이지 않은 분자만 예측 — 정직한 일반화 성능). 유사 아날로그가 학습/평가에 섞이지 않도록 골격 단위로 분리했습니다.</p>
+          <div class="summary" id="validationMetrics"></div>
+          <canvas id="valChart" width="720" height="440" style="width:100%;max-width:560px;height:auto;border:1px solid var(--line);border-radius:8px;background:#fbfdfc"></canvas>
+          <p class="small">가로: 실측 pIC50 · 세로: Ridge 예측 pIC50 (708점 샘플). 대각선에 가까울수록 정확.</p>
+        </div>
+      </section>
+
+      <section id="projectView" class="hidden">
+        <div class="projectGrid">
+          <div id="datasetSummaryProject" class="summary wide"></div>
+          <article class="infoCard">
+            <h2>프로젝트 방향 전환 (배경)</h2>
+            <h3>현황·한계</h3>
+            <p>AlphaFold3로 항체-항원 결합을 예측하려 했으나, 한 달간 seed를 높여가며 시도했음에도 항체-항원 복합체 예측 정확도가 다른 복합체 대비 현저히 낮은 기술적 한계를 확인했습니다.</p>
+            <h3>변경안</h3>
+            <p>'코로나바이러스' 테마는 유지하고, 타겟을 스파이크 단백질에서 Mpro(Main Protease)를 타겟하는 리간드/Inhibitor 결합 복합체 예측으로 변경합니다.</p>
+            <h3>응용 전망 변경</h3>
+            <p>알부민 중심 접근에서 비강 스프레이 형태의 국소 전달 전략으로 전환합니다.</p>
+          </article>
+          <article class="infoCard">
+            <h2>과학적 방법론 (정직성)</h2>
+            <h3>활성 예측</h3>
+            <p>기준물질 유사도(휴리스틱, ρ=0.34)를 넘어, 6,368종 실측 pIC50으로 학습한 <b>QSAR 회귀모델</b>을 도입했습니다. Morgan fingerprint(r=2, 2048bit)+7개 물성 기반.</p>
+            <h3>검증 결과 (scaffold-CV)</h3>
+            <ul>
+              <li>RandomForest: Spearman <b>ρ=0.81</b> · R²=0.64</li>
+              <li>Ridge(브라우저 실시간): <b>ρ=0.76</b></li>
+              <li>기존 유사도 베이스라인: ρ=0.34</li>
+            </ul>
+            <p class="small">브라우저는 경량 Ridge 가중치로 임의 분자를 즉시 예측, 서버(Streamlit)는 RandomForest를 사용합니다. 모두 오프라인 재현 가능.</p>
+          </article>
+          <article class="infoCard">
+            <h2>개발 시 고려사항</h2>
+            <ul class="checklist">
+              <li>충분한 비강 점막 체류시간 확보</li>
+              <li>점막 투과성 향상</li>
+              <li>약물의 화학적 안정성</li>
+              <li>적절한 분무 입자 크기 및 제형 최적화</li>
+              <li>동물모델</li>
+              <li>국소 독성 및 점막 자극성 평가</li>
+              <li>약동학(PK) 및 약력학(PD) 검증</li>
+            </ul>
+          </article>
+          <article class="infoCard">
+            <h2>자율 에이전트 ↔ 4영역 매핑</h2>
+            <table>
+              <thead><tr><th>대회 영역</th><th>에이전트 구현</th></tr></thead>
+              <tbody>
+                <tr><td>자율 가설생성·검증</td><td>Agent1 가설 + Agent2 QSAR 검증</td></tr>
+                <tr><td>도구기반 분자 최적화 루프</td><td>Agent3 아날로그 검색·ML 스코어 hill-climb</td></tr>
+                <tr><td>규제·지능형 임상 설계</td><td>Agent4 구조알림·비임상·PK/PD 판정</td></tr>
+                <tr><td>융합</td><td>비강 제형 + 통합 파이프라인</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="infoCard wide">
+            <h2>제4회 AI 신약개발 경진대회 (4th JUMP AI)</h2>
+            <p><strong>주최:</strong> 보건복지부 · <strong>주관:</strong> 한국보건산업진흥원(KHIDI)</p>
+            <p><strong>테마:</strong> 신약개발 단계별 특화 에이전틱(Agentic) AI 설계·구현</p>
+            <p><strong>일정:</strong> 예선 ~8/7 · 본선 9/7~10/2 · 수상 11/6 · <strong>시상:</strong> 대상 보건복지부 장관상 + 1,000만원 · 총상금 3,350만원 · 94팀</p>
+            <p><strong>팀:</strong> 아시아경제교육센터 알파폴드팀(팀장 국경희) · <strong>멘토:</strong> 홍성현(클리켐바이오)</p>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+  <footer><div class="wrap">주의: 본 도구의 QSAR 예측은 공개 실측 데이터로 학습·검증한 <b>비임상 계산 예측값</b>입니다. 실험 데이터, 독성시험, 임상 데이터 또는 허가 판단을 대체하지 않습니다. · 클리켐바이오 × 알파폴드팀</div></footer>
+  <script src="https://cdn.jsdelivr.net/npm/@rdkit/rdkit/dist/RDKit_minimal.js"></script>
+  <script>
+    "use strict";
+    const RDKIT_WASM_URL = "https://cdn.jsdelivr.net/npm/@rdkit/rdkit/dist/RDKit_minimal.wasm";
+    const PRESETS = {
+      nirmatrelvir: {name:"Nirmatrelvir", smiles:"CC1([C@@H]2[C@H]1[C@H](N(C2)C(=O)[C@H](C(C)(C)C)NC(=O)C(F)(F)F)C(=O)N[C@@H](C[C@@H]3CCNC3=O)C#N)C"},
+      ensitrelvir: {name:"Ensitrelvir", smiles:String.raw`Cn1cnc(CN2C(=O)N(Cc3cc(F)c(F)cc3F)C(=N\c3cc4cn(C)nc4cc3Cl)/NC2=O)n1`},
+      gc376: {name:"GC376", smiles:"CC(C)C[C@@H](C(=O)N[C@@H](CC1CCNC1=O)C(O)S(=O)(=O)[O-])NC(=O)OCC2=CC=CC=C2.[Na+]"},
+      aspirin: {name:"Aspirin", smiles:"CC(=O)Oc1ccccc1C(=O)O"}
+    };
+    let RDKit = null;
+    let referenceFps = [];
+    let QSAR = null;          // qsar_model.json (ridge weights)
+    let AGENTLIB = null;      // agent_library.json (400 compounds w/ onbits + predPic50)
+    let lastSingle = null;
+    let lastRows = [];
+    let libraryRows = null, libraryLoaded = false;
+    let librarySort = {key:"composite", dir:"desc"};
+    let currentMode = "activity";
+    const $ = (id) => document.getElementById(id);
+    const fmt = (v, n=2) => Number.isFinite(Number(v)) ? Number(v).toFixed(n) : "-";
+    const clampScore = (x) => Math.round(Math.max(0, Math.min(100, Number(x) || 0)) * 100) / 100;
+    function scoreLowBetter(v, fullAt, zeroAt){ if(v <= fullAt) return 1; if(v >= zeroAt) return 0; return (zeroAt - v) / (zeroAt - fullAt); }
+    function scoreRange(v, low, high, minZero, maxZero){ if(low <= v && v <= high) return 1; if(v < low) return v <= minZero ? 0 : (v - minZero) / (low - minZero); return v >= maxZero ? 0 : (maxZero - v) / (maxZero - high); }
+    function bitSet(fp){ const s = typeof fp === "string" ? fp : String(fp || ""); const out = new Set(); for(let i=0;i<s.length;i++) if(s[i] === "1") out.add(i); return out; }
+    function tanimoto(a, b){ if(!a.size && !b.size) return 0; let inter = 0; for(const x of a) if(b.has(x)) inter++; return inter / (a.size + b.size - inter); }
+    function buildFingerprint(name, smiles){ const m = RDKit.get_mol(smiles); if(!m) throw new Error("Invalid reference SMILES: " + name); try { return {name, fp:bitSet(m.get_morgan_fp(JSON.stringify({radius:2,nBits:2048})))}; } finally { m.delete(); } }
+    async function buildReferenceFingerprints(){
+      const response = await fetch("reference_actives.json", {cache:"no-cache"});
+      if(!response.ok) throw new Error("reference_actives.json HTTP " + response.status);
+      const rows = await response.json();
+      if(!Array.isArray(rows) || rows.length !== 100) throw new Error("Expected 100 reference actives, got " + (Array.isArray(rows) ? rows.length : "non-array"));
+      referenceFps = rows.map((r) => buildFingerprint(r.id || r.chembl_id || "reference", r.smiles));
+      window.__nasalMproReferenceCount = referenceFps.length;
+    }
+    async function loadQsar(){
+      const r = await fetch("qsar_model.json", {cache:"no-cache"});
+      if(!r.ok) throw new Error("qsar_model.json HTTP " + r.status);
+      QSAR = await r.json();
+      QSAR._wmap = new Map();
+      for(let i=0;i<QSAR.morgan_index.length;i++) QSAR._wmap.set(QSAR.morgan_index[i], QSAR.morgan_weight[i]);
+      window.__qsarLoaded = true;
+    }
+    // ML 예측 pIC50: intercept + Σ(on-bit weight) + Σ desc_w*(d-mean)/std
+    function predictPic50(d, onBits){
+      if(!QSAR) return null;
+      let s = QSAR.intercept;
+      for(const b of onBits){ const w = QSAR._wmap.get(b); if(w !== undefined) s += w; }
+      const order = QSAR.desc_order;
+      for(let j=0;j<order.length;j++){
+        const key = order[j];
+        const v = key === "MW" ? d.MW : key === "logP" ? d.logP : key === "TPSA" ? d.TPSA : key === "HBD" ? d.HBD : key === "HBA" ? d.HBA : key === "RotB" ? d.RotB : d.QED;
+        s += QSAR.desc_weight[j] * ((Number(v) - QSAR.desc_mean[j]) / QSAR.desc_std[j]);
+      }
+      return s;
+    }
+    function qedProxy(d){
+      const mw = scoreRange(d.MW, 180, 500, 80, 750), logp = scoreRange(d.logP, 0.5, 3.5, -1, 6), tpsa = scoreRange(d.TPSA, 20, 120, 0, 220);
+      const hbd = scoreLowBetter(d.HBD, 2, 6), hba = scoreLowBetter(d.HBA, 8, 14), rotb = scoreLowBetter(d.RotB, 6, 16);
+      return Math.max(0, Math.min(1, 0.22*mw + 0.20*logp + 0.20*tpsa + 0.13*hbd + 0.13*hba + 0.12*rotb));
+    }
+    function scores(d, sim){
+      const nasal = clampScore(25*scoreLowBetter(d.MW,350,650) + 25*scoreRange(d.logP,1,3,0,5) + 20*scoreLowBetter(d.TPSA,90,180) + 15*scoreLowBetter(d.HBD,2,6) + 10*scoreLowBetter(d.RotB,6,14) + 5*d.QED);
+      const mproFit = clampScore(50*sim + 15*d.QED + 10*scoreLowBetter(d.TPSA,140,220) + 10*scoreLowBetter(d.MW,650,800) + 5*scoreLowBetter(d.HBA,10,14) + 5*scoreLowBetter(d.RotB,12,18) + (d.lipinski ? 5 : 0));
+      const composite = clampScore(0.40*mproFit + 0.25*(sim*100) + 0.25*nasal + 0.10*(d.QED*100));
+      return {nasal, mproFit, composite};
+    }
+    function pic50Verdict(p){ return p >= 7 ? ["강력 (IC50 ≤ 100nM 추정)","good"] : p >= 6 ? ["중등도","mid"] : ["약함","bad"]; }
+    function getDesc(smiles){
+      const mol = RDKit.get_mol(smiles);
+      if(!mol) throw new Error("유효하지 않은 SMILES입니다.");
+      try{
+        const raw = JSON.parse(mol.get_descriptors());
+        const d = { MW: Number(raw.amw), logP: Number(raw.CrippenClogP), TPSA: Number(raw.tpsa), HBD: Number(raw.NumHBD), HBA: Number(raw.NumHBA), RotB: Number(raw.NumRotatableBonds) };
+        const qedValue = raw.qed ?? raw.QED;
+        d.qedApprox = qedValue === undefined;
+        d.QED = d.qedApprox ? qedProxy(d) : Number(qedValue);
+        d.lipinski = d.MW <= 500 && d.logP <= 5 && d.HBD <= 5 && d.HBA <= 10;
+        d.veber = d.TPSA <= 140 && d.RotB <= 10;
+        const onBits = bitSet(mol.get_morgan_fp(JSON.stringify({radius:2,nBits:2048})));
+        let sim = 0;
+        for(const p of referenceFps) sim = Math.max(sim, tanimoto(onBits, p.fp));
+        const predPic50 = predictPic50(d, onBits);
+        const svg = mol.get_svg();
+        return {d, sim, svg, raw, onBits, predPic50};
+      } finally { mol.delete(); }
+    }
+    function drawChart(values, labels){
+      const c = $("scoreChart"), ctx = c.getContext("2d"), w = c.width, h = c.height;
+      ctx.clearRect(0,0,w,h); ctx.fillStyle = "#fbfdfc"; ctx.fillRect(0,0,w,h);
+      const colors = ["#0f766e","#2563eb","#d97706","#7c3aed"], maxBar = w - 150;
+      ctx.font = "700 17px system-ui"; ctx.textBaseline = "middle";
+      values.forEach((v,i)=>{ const y = 32 + i*44, bw = Math.max(0, Math.min(maxBar, maxBar*v/100)); ctx.fillStyle = "#e7efed"; ctx.fillRect(90,y-13,maxBar,26); ctx.fillStyle = colors[i]; ctx.fillRect(90,y-13,bw,26); ctx.fillStyle = "#14211f"; ctx.fillText(labels[i], 10, y); ctx.fillText(fmt(v,1), 100+maxBar, y); });
+    }
+    function renderSingle(){
+      if(!lastSingle) return;
+      const p = lastSingle.predPic50;
+      const [txt, cls] = pic50Verdict(p);
+      $("predPic50").textContent = fmt(p,2);
+      $("verdict").textContent = txt; $("verdict").className = "verdict " + cls;
+      const ic50nM = Math.pow(10, 9 - p);
+      $("ic50est").textContent = ic50nM >= 1000 ? (ic50nM/1000).toFixed(1)+" µM" : ic50nM.toFixed(0)+" nM";
+      $("composite").textContent = fmt(lastSingle.composite,1);
+      $("nasalScore").textContent = fmt(lastSingle.nasal,1);
+      $("mproSim").textContent = fmt(lastSingle.sim,3);
+      $("qedScore").textContent = fmt(lastSingle.QED,3);
+      $("qedLabel").textContent = lastSingle.qedApprox ? "QED(근사)" : "QED";
+      $("mproFit").textContent = fmt(lastSingle.mproFit,1);
+      const predNorm = Math.max(0, Math.min(100, (p - 4) / (11 - 4) * 100));
+      drawChart([predNorm, lastSingle.sim*100, lastSingle.nasal, lastSingle.QED*100], ["예측활성","유사도","비강","QED"]);
+      $("descTable").innerHTML = [
+        ["예측 pIC50 (ML)", fmt(p,3)], ["MW", fmt(lastSingle.MW,2)], ["logP", fmt(lastSingle.logP,2)], ["TPSA", fmt(lastSingle.TPSA,2)],
+        ["HBD", lastSingle.HBD], ["HBA", lastSingle.HBA], ["RotB", lastSingle.RotB], [lastSingle.qedApprox ? "QED(근사)" : "QED", fmt(lastSingle.QED,3)],
+        ["Lipinski", lastSingle.lipinski ? "통과" : "미통과"], ["Veber", lastSingle.veber ? "통과" : "미통과"], ["강활성 최대 유사도", fmt(lastSingle.sim,3)], ["Composite(개발성)", fmt(lastSingle.composite,2)]
+      ].map(([k,v])=>`<tr><th>${k}</th><td class="num">${v}</td></tr>`).join("");
+      window.__nasalMproSingle = {predPic50:p, composite:lastSingle.composite};
+    }
+    function render(smiles){
+      $("errorBox").classList.add("hidden");
+      try{
+        const r = getDesc(smiles), d = r.d, sc = scores(d, r.sim);
+        $("molSvg").innerHTML = r.svg;
+        lastSingle = {sim:r.sim, predPic50:r.predPic50, ...d, ...sc};
+        renderSingle();
+        return lastSingle;
+      }catch(e){ $("errorBox").textContent = e.message; $("errorBox").classList.remove("hidden"); throw e; }
+    }
+    function rankKey(r){ return currentMode === "activity" ? (r.predPic50 ?? -1) : (r.composite ?? -1); }
+    function rank(){
+      $("rankError").classList.add("hidden");
+      const lines = $("bulkInput").value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+      const rows = [];
+      for(const smiles of lines){
+        try{ const r = getDesc(smiles), sc = scores(r.d, r.sim); rows.push({smiles, sim:r.sim, predPic50:r.predPic50, ...r.d, ...sc}); }
+        catch(e){ rows.push({smiles, error:e.message, predPic50:-1, composite:-1}); }
+      }
+      lastRows = rows; renderRankRows(); $("csvBtn").disabled = !rows.length;
+    }
+    function renderRankRows(){
+      const rows = [...lastRows].sort((a,b)=>rankKey(b)-rankKey(a));
+      $("rankScoreHead").textContent = currentMode === "activity" ? "예측 pIC50" : "Composite";
+      $("rankBody").innerHTML = rows.map((r,i)=> {
+        if(r.error) return `<tr><td>${i+1}</td><td>${escapeHtml(r.smiles)}</td><td colspan="9">${escapeHtml(r.error)}</td></tr>`;
+        const headline = currentMode === "activity" ? fmt(r.predPic50,2) : fmt(r.composite,1);
+        const [txt] = pic50Verdict(r.predPic50);
+        return `<tr><td>${i+1}</td><td>${escapeHtml(r.smiles)}</td><td class="num">${headline}</td><td>${txt}</td><td class="num">${fmt(r.composite,1)}</td><td class="num">${fmt(r.MW,1)}</td><td class="num">${fmt(r.logP,2)}</td><td class="num">${fmt(r.TPSA,1)}</td><td class="num">${fmt(r.sim,3)}</td><td class="num">${fmt(r.nasal,1)}</td><td class="num">${fmt(r.QED,3)}</td></tr>`;
+      }).join("");
+    }
+    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+    function downloadCsv(){
+      const rows = [...lastRows].sort((a,b)=>rankKey(b)-rankKey(a));
+      const head = ["rank","smiles","pred_pIC50","verdict","composite","MW","logP","TPSA","HBD","HBA","RotB","similarity","nasal","QED","error"];
+      const body = rows.map((r,i)=> head.map(k => {
+        const [txt] = pic50Verdict(r.predPic50);
+        let v = k === "rank" ? i+1 : k === "pred_pIC50" ? r.predPic50 : k === "verdict" ? txt : k === "similarity" ? r.sim : (r[k] ?? "");
+        return `"${String(v).replaceAll('"','""')}"`;
+      }).join(","));
+      const blob = new Blob(["﻿" + head.join(",") + "\n" + body.join("\n")], {type:"text/csv;charset=utf-8"});
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "nasalmpro_rank.csv"; a.click(); URL.revokeObjectURL(a.href);
+    }
+
+    /* ===== 자율 에이전트 파이프라인 ===== */
+    async function loadAgentLib(){
+      if(AGENTLIB) return;
+      const r = await fetch("agent_library.json", {cache:"no-cache"});
+      if(!r.ok) throw new Error("agent_library.json HTTP " + r.status);
+      AGENTLIB = await r.json();
+      for(const c of AGENTLIB) c._onset = new Set(c.onbits);
+      window.__agentLibCount = AGENTLIB.length;
+    }
+    function agentUtil(pred, nasal, simToAnchor){
+      const a = Math.max(0, Math.min(1, (pred - 4) / (11 - 4)));
+      return 0.60*a + 0.25*(nasal/100) + 0.15*simToAnchor;
+    }
+    function structuralAlerts(smiles){
+      const alerts = [];
+      if(/\[N\+\]\(=O\)\[O-\]|N\(=O\)=O/.test(smiles)) alerts.push("니트로기(잠재 독성)");
+      if(/C\(=O\)Cl|S\(=O\)\(=O\)Cl/.test(smiles)) alerts.push("아실/설포닐 클로라이드(반응성)");
+      if(/\[Na\+\]|\[K\+\]|\[Cl-\]/.test(smiles)) alerts.push("염 형태(제형 시 유리염기 검토)");
+      return alerts;
+    }
+    async function runAgent(seedSmiles){
+      $("agentError").classList.add("hidden");
+      $("agentOut").innerHTML = `<div class="panel status"><span class="spin"></span><span>에이전트 실행 중...</span></div>`;
+      try{
+        await loadAgentLib();
+        const r = getDesc(seedSmiles);
+        const seedNasal = scores(r.d, r.sim).nasal;
+        const seedPred = r.predPic50;
+        // Agent3: hill-climb over library analogs
+        let anchor = r.onBits, picked = new Set();
+        const traj = [{round:0, id:"시드", pred:seedPred, nasal:seedNasal, sim:1, measured:null, util:agentUtil(seedPred, seedNasal, 1)}];
+        const ROUNDS = 5;
+        for(let k=1;k<=ROUNDS;k++){
+          let best = null;
+          for(const c of AGENTLIB){
+            if(picked.has(c.id)) continue;
+            const sim = tanimoto(anchor, c._onset);
+            if(sim < 0.15) continue;
+            const u = agentUtil(c.predPic50, c.nasal, sim);
+            if(!best || u > best.u) best = {c, sim, u};
+          }
+          if(!best) break;
+          const cur = traj[traj.length-1];
+          if(best.u <= cur.util + 1e-9) break;
+          picked.add(best.c.id); anchor = best.c._onset;
+          traj.push({round:k, id:best.c.id, pred:best.c.predPic50, nasal:best.c.nasal, sim:best.sim, measured:best.c.pIC50, util:best.u, smiles:best.c.smiles});
+        }
+        const finalStep = traj[traj.length-1];
+        const gain = finalStep.pred - seedPred;
+        const alerts = finalStep.smiles ? structuralAlerts(finalStep.smiles) : structuralAlerts(seedSmiles);
+        // render
+        const [seedTxt] = pic50Verdict(seedPred);
+        let html = "";
+        html += agentCard(1, "가설 생성", "hypothesis", `
+          <p><b>타겟:</b> SARS-CoV-2 Main Protease(3CLpro, Mpro) — 바이러스 폴리단백질 절단 필수 효소.</p>
+          <p><b>목적함수:</b> 예측 pIC50 최대화 <i>s.t.</i> 비강 전달성·약물성 유지 (효용 U = 0.60·활성 + 0.25·비강 + 0.15·SAR연속성).</p>
+          <p><b>시드 진단:</b> 예측 pIC50 <b>${fmt(seedPred,2)}</b> (${seedTxt}), 비강 <b>${fmt(seedNasal,1)}</b>. ${seedPred>=7?"이미 강활성 — 비강 전달성 개선 여지 탐색.":"활성 향상 여지 큼 — 아날로그 탐색으로 최적화."}</p>`);
+        html += agentCard(2, "활성·물성 평가", "eval", `
+          <table style="min-width:auto">
+            <tr><th>예측 pIC50 (Ridge QSAR)</th><td class="num">${fmt(seedPred,3)}</td></tr>
+            <tr><th>강활성 100종 최대 유사도</th><td class="num">${fmt(r.sim,3)}</td></tr>
+            <tr><th>MW / logP / TPSA</th><td class="num">${fmt(r.d.MW,1)} / ${fmt(r.d.logP,2)} / ${fmt(r.d.TPSA,1)}</td></tr>
+            <tr><th>Lipinski / Veber</th><td class="num">${r.d.lipinski?"통과":"미통과"} / ${r.d.veber?"통과":"미통과"}</td></tr>
+          </table>
+          <p class="small">도구: 6,368종 실측 pIC50 학습 QSAR (scaffold-CV ρ=0.76). 실측 라이브러리에서 지문 유사도 기반 검색.</p>`);
+        const trajRows = traj.map(t=>{
+          const up = t.round>0 && t.pred>traj[0].pred;
+          const idCell = t.id.startsWith("CHEMBL") ? `<a href="https://www.ebi.ac.uk/chembl/compound_report_card/${encodeURIComponent(t.id)}/" target="_blank" rel="noopener">${t.id}</a>` : t.id;
+          return `<tr><td>${t.round}</td><td>${idCell}</td><td class="num ${up?'trajUp':''}">${fmt(t.pred,2)}</td><td class="num">${t.measured==null?"–":fmt(t.measured,2)}</td><td class="num">${fmt(t.nasal,1)}</td><td class="num">${fmt(t.sim,3)}</td><td class="num">${fmt(t.util,3)}</td></tr>`;
+        }).join("");
+        html += agentCard(3, "도구기반 분자 최적화 루프", "optimize", `
+          <p>시드에서 출발해 매 라운드 실측 라이브러리의 아날로그(지문 유사도≥0.15) 중 <b>효용 최대</b> 후보로 재앵커하는 hill-climb. ${traj.length-1}회 개선 후 수렴.</p>
+          <div class="tablewrap" style="max-height:none"><table style="min-width:520px"><thead><tr><th>R</th><th>후보</th><th>예측 pIC50</th><th>측정 pIC50</th><th>비강</th><th>SAR유사도</th><th>효용 U</th></tr></thead><tbody>${trajRows}</tbody></table></div>
+          <p class="small">측정 pIC50은 에이전트가 <b>사용하지 않은</b> 검증용 실측값 — ML 예측이 실제 강활성 후보로 수렴했는지 확인용.</p>`);
+        html += agentCard(4, "규제·제형 판정", "reg", `
+          <p><b>최종 후보 구조알림:</b> ${alerts.length? alerts.map(a=>`<span class="pill2">⚠ ${a}</span>`).join(" ") : "<span class='pill2'>주요 반응성/독성 구조알림 없음</span>"}</p>
+          <p><b>비강 제형 판정:</b> 비강 전달성 ${fmt(finalStep.nasal,1)}/100 → ${finalStep.nasal>=70?"유리(점막 투과·체류 양호 추정)":finalStep.nasal>=45?"보완 필요(TPSA·HBD·MW 감점)":"불리"}.</p>
+          <p class="small">출력은 계산 기반 후보 선별 자료입니다. 독성·ADME·제형 안정성·세포/동물/임상 검증 전 효능 주장 불가.</p>`);
+        // final recommendation
+        const fid = finalStep.id === "시드" ? "시드 분자" : finalStep.id;
+        html += `<div class="finalCard"><h3 style="margin:0 0 8px">🎯 최종 추천 후보 · ${escapeHtml(fid)}</h3>
+          <span class="pill2">예측 pIC50 ${fmt(finalStep.pred,2)}</span>
+          ${finalStep.measured!=null?`<span class="pill2">측정 pIC50 ${fmt(finalStep.measured,2)}</span>`:""}
+          <span class="pill2">비강 ${fmt(finalStep.nasal,1)}</span>
+          <span class="pill2">활성 향상 ${gain>=0?"+":""}${fmt(gain,2)}</span>
+          <p style="margin:8px 0 0">${finalStep.id==="시드"?"라이브러리 내 시드보다 우수한 아날로그를 찾지 못해 시드를 유지했습니다.":`시드(예측 ${fmt(seedPred,2)}) → 자율 탐색으로 예측 pIC50 <b>${fmt(finalStep.pred,2)}</b> 후보 도출. 측정값 ${finalStep.measured!=null?fmt(finalStep.measured,2)+"가 강활성을 확인":"미상"}.`}</p></div>`;
+        $("agentOut").innerHTML = html;
+        window.__agentFinal = {seedPred, finalPred:finalStep.pred, rounds:traj.length-1};
+      }catch(e){
+        $("agentOut").innerHTML = "";
+        $("agentError").textContent = e.message || String(e); $("agentError").classList.remove("hidden");
+      }
+    }
+    function agentCard(n, title, tool, body){
+      const tools = {hypothesis:"추론", eval:"tool · QSAR", optimize:"tool · 아날로그검색+ML", reg:"rule-based"};
+      return `<div class="agent"><div class="ahead"><span class="n">${n}</span><b>Agent ${n} · ${title}</b><span class="tool">${tools[tool]}</span></div><div class="abody">${body}</div></div>`;
+    }
+
+    /* ===== 라이브러리 / 검증 / 요약 ===== */
+    function renderDatasetSummary(){
+      const html = [
+        ["통합 실측 데이터셋", "6,368종 (ChEMBL SARS-CoV-2 Mpro 4,424 + COVID Moonshot 1,944)"],
+        ["ML QSAR 검증", "RandomForest ρ=0.81 · Ridge ρ=0.76 (scaffold-CV) vs 유사도 0.34"],
+        ["표시 범위", "실측 라이브러리 상위 400 · 검증 산점도 708점"]
+      ].map(([k,v]) => `<div class="infoCard"><b>${k}</b><span>${v}</span></div>`).join("");
+      $("datasetSummaryLibrary").innerHTML = html;
+      $("datasetSummaryProject").innerHTML = html;
+    }
+    async function loadLibrary(){
+      if(libraryLoaded) return;
+      $("libraryError").classList.add("hidden");
+      try{
+        const response = await fetch("mpro_library_web.json", {cache:"no-cache"});
+        if(!response.ok) throw new Error("HTTP " + response.status);
+        libraryRows = await response.json();
+        if(!Array.isArray(libraryRows)) throw new Error("Library JSON is not an array");
+        libraryLoaded = true; window.__nasalMproLibraryCount = libraryRows.length; renderLibrary();
+      }catch(e){ $("libraryError").textContent = "실측 라이브러리를 불러오지 못했습니다. " + (e.message || e); $("libraryError").classList.remove("hidden"); }
+    }
+    function libKey(){ return currentMode === "activity" ? "pIC50" : "composite"; }
+    function renderLibrary(){
+      if(!libraryRows) return;
+      const q = $("libraryFilter").value.trim().toLowerCase();
+      const rows = libraryRows.filter((r) => !q || String(r.id).toLowerCase().includes(q) || String(r.src).toLowerCase().includes(q) || String(r.smiles).toLowerCase().includes(q));
+      const key = librarySort.key === "composite" ? libKey() : librarySort.key;
+      const dir = librarySort.dir === "asc" ? 1 : -1;
+      rows.sort((a,b) => { const av = a[key], bv = b[key]; if(typeof av === "string" || typeof bv === "string") return dir * String(av).localeCompare(String(bv)); return dir * ((Number(av) || 0) - (Number(bv) || 0)); });
+      $("libraryBody").innerHTML = rows.map((r) => {
+        const id = escapeHtml(r.id || "");
+        const href = id.startsWith("CHEMBL") ? "https://www.ebi.ac.uk/chembl/compound_report_card/" + encodeURIComponent(id) + "/" : "#";
+        const idCell = href === "#" ? id : `<a href="${href}" target="_blank" rel="noopener">${id}</a>`;
+        const compVal = currentMode === "activity" ? r.pIC50 : r.composite;
+        return `<tr><td>${idCell}</td><td>${escapeHtml(r.src || "")}</td><td class="num">${fmt(r.pIC50,2)}</td><td class="num">${fmt(r.MW,1)}</td><td class="num">${fmt(r.logP,2)}</td><td class="num">${fmt(r.similarity,3)}</td><td class="num">${fmt(r.composite,1)}</td></tr>`;
+      }).join("");
+      window.__nasalMproRenderedRows = rows.length;
+    }
+    let validationLoaded = false;
+    async function loadValidation(){
+      if(validationLoaded) return;
+      try{
+        const r = await fetch("validation.json", {cache:"no-cache"});
+        const pts = await r.json();
+        validationLoaded = true;
+        $("validationMetrics").innerHTML = [
+          ["RandomForest (서버)", "ρ=0.81 · R²=0.64 · RMSE=0.73"],
+          ["Ridge 선형 (브라우저)", "ρ=0.76 · R²=0.54"],
+          ["유사도 베이스라인", "ρ=0.34"]
+        ].map(([k,v]) => `<div class="infoCard"><b>${k}</b><span>${v}</span></div>`).join("");
+        drawScatter(pts);
+      }catch(e){ $("validationMetrics").innerHTML = `<div class="err">검증 데이터 로드 실패: ${escapeHtml(e.message||e)}</div>`; }
+    }
+    function drawScatter(pts){
+      const c = $("valChart"), x = c.getContext("2d"), W=c.width, H=c.height, pad=48;
+      x.clearRect(0,0,W,H); x.fillStyle="#fbfdfc"; x.fillRect(0,0,W,H);
+      const lo=3, hi=12, sx=v=>pad+(v-lo)/(hi-lo)*(W-pad*1.4), sy=v=>H-pad-(v-lo)/(hi-lo)*(H-pad*1.6);
+      x.strokeStyle="#dce5e1"; x.fillStyle="#65736f"; x.font="12px system-ui"; x.lineWidth=1;
+      for(let v=4;v<=11;v++){ x.beginPath(); x.moveTo(sx(v),H-pad); x.lineTo(sx(v),pad); x.stroke(); x.fillText(v, sx(v)-4, H-pad+16); x.beginPath(); x.moveTo(pad,sy(v)); x.lineTo(W-pad*0.4,sy(v)); x.stroke(); x.fillText(v, pad-20, sy(v)+4); }
+      x.strokeStyle="#0f766e"; x.lineWidth=2; x.beginPath(); x.moveTo(sx(4),sy(4)); x.lineTo(sx(11),sy(11)); x.stroke();
+      x.fillStyle="rgba(37,99,235,.5)"; for(const p of pts){ x.beginPath(); x.arc(sx(p.m), sy(p.p), 3, 0, 7); x.fill(); }
+      x.fillStyle="#14211f"; x.font="700 13px system-ui"; x.fillText("실측 pIC50 →", W/2-40, H-14); x.save(); x.translate(16,H/2+40); x.rotate(-Math.PI/2); x.fillText("예측 pIC50 →",0,0); x.restore();
+    }
+
+    function setMode(mode){
+      currentMode = mode;
+      $("activityMode").classList.toggle("active", mode === "activity");
+      $("balancedMode").classList.toggle("active", mode === "balanced");
+      $("metricBadge").textContent = mode === "activity" ? "정렬: 예측 pIC50 (ρ=0.76)" : "정렬: 개발성 Composite";
+      renderRankRows(); renderLibrary();
+    }
+    function showTab(which){
+      const tabs = ["single","rank","agent","library","validation","project"];
+      for(const name of tabs){ $(name + "Tab").classList.toggle("active", name === which); $(name + "View").classList.toggle("hidden", name !== which); }
+      if(which === "library") loadLibrary();
+      if(which === "validation") loadValidation();
+    }
+    function wire(){
+      $("evalBtn").onclick = () => render($("smilesInput").value.trim());
+      document.querySelectorAll(".preset").forEach(b => b.onclick = () => { $("smilesInput").value = PRESETS[b.dataset.key].smiles; render($("smilesInput").value); });
+      document.querySelectorAll(".agentPreset").forEach(b => b.onclick = () => { $("agentSmiles").value = PRESETS[b.dataset.key].smiles; });
+      $("singleTab").onclick = () => showTab("single");
+      $("rankTab").onclick = () => showTab("rank");
+      $("agentTab").onclick = () => showTab("agent");
+      $("libraryTab").onclick = () => showTab("library");
+      $("validationTab").onclick = () => showTab("validation");
+      $("projectTab").onclick = () => showTab("project");
+      $("activityMode").onclick = () => setMode("activity");
+      $("balancedMode").onclick = () => setMode("balanced");
+      $("rankBtn").onclick = rank; $("csvBtn").onclick = downloadCsv;
+      $("agentRunBtn").onclick = () => runAgent($("agentSmiles").value.trim());
+      $("libraryFilter").oninput = renderLibrary;
+      document.querySelectorAll("#libraryView th.sortable").forEach((th) => { th.onclick = () => { const key = th.dataset.sort; librarySort = {key, dir: librarySort.key === key && librarySort.dir === "desc" ? "asc" : "desc"}; renderLibrary(); }; });
+      $("bulkInput").value = ["nirmatrelvir","ensitrelvir","gc376"].map(k => PRESETS[k].smiles).join("\n");
+      $("agentSmiles").value = PRESETS.gc376.smiles;
+    }
+    async function boot(){
+      if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(console.warn);
+      renderDatasetSummary();
+      RDKit = await initRDKitModule({locateFile: () => RDKIT_WASM_URL});
+      await Promise.all([buildReferenceFingerprints(), loadQsar()]);
+      wire();
+      $("loadState").classList.add("hidden"); $("app").classList.remove("hidden");
+      $("smilesInput").value = PRESETS.nirmatrelvir.smiles; render($("smilesInput").value);
+    }
+    boot().catch(e => { $("loadState").innerHTML = `<div class="err">초기화 실패: ${escapeHtml(e.message || e)}</div>`; console.error(e); });
+  </script>
+</body>
+</html>

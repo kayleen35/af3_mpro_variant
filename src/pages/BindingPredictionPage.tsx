@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Zap, Play, Lock, Hash, ShieldCheck, CheckSquare, Square } from 'lucide-react';
 import { startPrediction, getPredictionStatus } from '../api/analysisApi';
@@ -6,19 +6,33 @@ import { INITIAL_INHIBITORS } from '../types/inhibitor';
 import { InhibitorCard } from '../components/inhibitor';
 import { EmptyState, LoadingState } from '../components/common';
 
+// sessionStorage 키 헬퍼
+const STORAGE_KEY = (jobId: string) => `af3_predict_${jobId}`;
+
 export const BindingPredictionPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const jobId = searchParams.get('jobId');
+
+  // 페이지 리로드 시 sessionStorage에서 상태 복구
+  const savedState = jobId ? sessionStorage.getItem(STORAGE_KEY(jobId)) : null;
+  const parsed = savedState ? (() => { try { return JSON.parse(savedState); } catch { return null; } })() : null;
 
   const [selectedIds, setSelectedIds] = useState<string[]>(
     INITIAL_INHIBITORS.map((i) => i.id)
   );
   const [seed, setSeed] = useState<string>('');
   const [fullInference] = useState<boolean>(true);
-  const [isPredicting, setIsPredicting] = useState<boolean>(false);
-  const [pollingStep, setPollingStep] = useState<string>('초기화 중');
+
+  // isPredicting이 true면 폴링 루프 useEffect가 자동 실행됨
+  const [isPredicting, setIsPredicting] = useState<boolean>(parsed?.isPredicting ?? false);
+  const [pollingStep, setPollingStep] = useState<string>(parsed?.pollingStep ?? '초기화 중');
   const [error, setError] = useState<string | null>(null);
+
+  // startTime은 ref로 관리 (렌더 트리거 없이 갱신)
+  const startTimeRef = useRef<number>(parsed?.startTime ?? Date.now());
+  // 폴링 루프 중단 플래그
+  const stopPollingRef = useRef<boolean>(false);
 
   const handleToggle = (id: string) => {
     setSelectedIds((prev) =>
@@ -34,6 +48,89 @@ export const BindingPredictionPage: React.FC = () => {
     }
   };
 
+  // sessionStorage에 현재 상태 저장
+  const persistState = useCallback((step: string) => {
+    if (!jobId) return;
+    sessionStorage.setItem(
+      STORAGE_KEY(jobId),
+      JSON.stringify({ isPredicting: true, pollingStep: step, startTime: startTimeRef.current })
+    );
+  }, [jobId]);
+
+  const clearPersistedState = useCallback(() => {
+    if (jobId) sessionStorage.removeItem(STORAGE_KEY(jobId));
+  }, [jobId]);
+
+  // ─────────────────────────────────────────────
+  // 폴링 루프: isPredicting이 true인 동안 실행
+  // startPrediction과 완전히 분리된 useEffect로 관리
+  // → handleStartPrediction의 catch가 폴링 에러를 삼키는 문제 원천 차단
+  // ─────────────────────────────────────────────
+  useEffect(() => {
+    if (!isPredicting || !jobId) return;
+
+    stopPollingRef.current = false;
+    let rafId: ReturnType<typeof setTimeout>;
+
+    const poll = async () => {
+      const POLL_INTERVAL = 10000; // 10초
+
+      while (!stopPollingRef.current) {
+        await new Promise((r) => { rafId = setTimeout(r, POLL_INTERVAL); });
+        if (stopPollingRef.current) break;
+
+        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+
+        try {
+          const statusRes = await getPredictionStatus(jobId);
+
+          if (statusRes?.status === 'completed' || statusRes?.status?.startsWith('partial_completed')) {
+            const totalSec = Math.floor((Date.now() - startTimeRef.current) / 1000);
+            const totalMin = Math.floor(totalSec / 60);
+            const remSec = totalSec % 60;
+            const isPartial = statusRes.status?.startsWith('partial_completed');
+            const doneMsg = isPartial
+              ? `✅ 일부 억제제 구조 생성 완료! (총 ${totalMin}분 ${remSec}초 소요) — 부분 결과 페이지로 이동합니다...`
+              : `✅ 3D 구조 생성 완료! (총 ${totalMin}분 ${remSec}초 소요) — 결과 페이지로 이동합니다...`;
+            setPollingStep(doneMsg);
+            clearPersistedState();
+            await new Promise((r) => setTimeout(r, 1200));
+            navigate(`/comparison?jobId=${jobId}&elapsed=${totalSec}`);
+            return;
+          }
+
+          if (statusRes?.status === 'timeout') {
+            setError('GPU 연산 시간이 초과되었습니다. WSL 내 로그를 확인해주세요.');
+            clearPersistedState();
+            setIsPredicting(false);
+            return;
+          }
+        } catch (_) {
+          // 네트워크 에러 — 계속 polling (화면 복귀 없음)
+        }
+
+        const stepMsg = `GPU 연산 진행 중... (${minutes}분 ${seconds}초 경과) — 단백질 구조 폴딩 및 리간드 도킹 수행 중`;
+        setPollingStep(stepMsg);
+        persistState(stepMsg);
+      }
+    };
+
+    poll().catch((err) => {
+      // 폴링 루프 자체의 예상치 못한 에러 — 에러 메시지만 표시, 화면 복귀 안 함
+      console.error('[Polling] Unexpected error:', err);
+    });
+
+    return () => {
+      stopPollingRef.current = true;
+      clearTimeout(rafId);
+    };
+  }, [isPredicting, jobId, navigate, persistState, clearPersistedState]);
+
+  // ─────────────────────────────────────────────
+  // 예측 시작: POST만 담당 (폴링은 useEffect가 맡음)
+  // ─────────────────────────────────────────────
   const handleStartPrediction = async () => {
     if (!jobId) return;
     if (selectedIds.length === 0) {
@@ -42,58 +139,28 @@ export const BindingPredictionPage: React.FC = () => {
     }
 
     setError(null);
-    setIsPredicting(true);
-    setPollingStep('WSL Ubuntu AlphaFold 3 엔진에 예측 요청 전송 중...');
+
+    startTimeRef.current = Date.now();
+    const initStep = 'WSL Ubuntu AlphaFold 3 엔진에 예측 요청 전송 중...';
 
     try {
-      // 1. 예측 실행 요청
+      // POST 요청 — 성공/실패와 무관하게 여기서만 에러 처리
       await startPrediction(jobId, selectedIds, {
         fullInference,
         seed: seed ? Number(seed) : undefined,
       });
 
-      setPollingStep('GPU 연산 시작됨 — RTX 4070 에서 3D 복합체 구조 생성 중...');
-
-      // 2. 실제 백엔드 status polling (무제한 대기, 10초 간격)
-      const POLL_INTERVAL = 10000;
-      let attempt = 0;
-
-      while (true) {
-        await new Promise((r) => setTimeout(r, POLL_INTERVAL));
-        attempt++;
-
-        const elapsed = Math.floor((attempt * POLL_INTERVAL) / 1000);
-        const minutes = Math.floor(elapsed / 60);
-        const seconds = elapsed % 60;
-
-        try {
-          const statusRes = await getPredictionStatus(jobId);
-          if (statusRes && statusRes.status === 'completed') {
-            setPollingStep('✅ 3D 구조 생성 완료! 결과 페이지로 이동합니다...');
-            await new Promise((r) => setTimeout(r, 800));
-            navigate(`/comparison?jobId=${jobId}`);
-            return;
-          }
-          if (statusRes && statusRes.status === 'timeout') {
-            setError('GPU 연산 시간이 초과되었습니다. WSL 내 로그를 확인해주세요.');
-            setIsPredicting(false);
-            return;
-          }
-        } catch (e) {
-          // 네트워크 에러 — 계속 polling
-        }
-
-        setPollingStep(
-          `GPU 연산 진행 중... (${minutes}분 ${seconds}초 경과) — 단백질 구조 폴딩 및 리간드 도킹 수행 중`
-        );
-      }
+      // POST 성공 → isPredicting = true → useEffect 폴링 루프 자동 시작
+      persistState(initStep);
+      setPollingStep(initStep);
+      setIsPredicting(true);
     } catch (err: any) {
-      console.error('Prediction error:', err);
+      // POST 자체 실패 시에만 에러 표시 (폴링 에러는 여기 도달하지 않음)
+      console.error('Prediction start error:', err);
       setError(
         err?.response?.data?.message ||
           '로컬 Ubuntu AF3 예측 파이프라인 호출에 실패했습니다. 서버 컨테이너가 실행 중인지 확인하세요.'
       );
-      setIsPredicting(false);
     }
   };
 
@@ -112,7 +179,7 @@ export const BindingPredictionPage: React.FC = () => {
     return (
       <LoadingState
         title="AlphaFold3 억제제 결합 예측 실행 중..."
-        description={`선택된 ${selectedIds.length}개 억제제(Nirmatrelvir, GC376 등)와 Mpro Dimer 복합체 간의 3D 구조 및 상호작용을 병렬 연산하고 있습니다.`}
+        description={`선택된 ${selectedIds.length || 16}개 억제제(Nirmatrelvir, GC376 등)와 Mpro Dimer 복합체 간의 3D 구조 및 상호작용을 병렬 연산하고 있습니다.`}
         step={pollingStep}
       />
     );

@@ -1,0 +1,22 @@
+{
+  "n_compounds": 6368,
+  "n_scaffolds": 1960,
+  "cv": "5-fold GroupKFold(scaffold)",
+  "random_forest": {
+    "spearman": 0.8094,
+    "pearson": 0.8037,
+    "r2": 0.6435,
+    "rmse": 0.7265
+  },
+  "ridge_linear_js": {
+    "spearman": 0.7545,
+    "pearson": 0.7405,
+    "r2": 0.5365,
+    "rmse": 0.8284
+  },
+  "similarity_baseline": {
+    "spearman": 0.3382
+  },
+  "target": "pIC50",
+  "features": "Morgan(r=2,2048bit) + 7 desc(std)"
+}
