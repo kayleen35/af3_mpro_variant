@@ -74,7 +74,7 @@ export const StatusPill: React.FC<StatusPillProps> = ({
   const displayLabel = label || config.text;
 
   const sizeStyles =
-    size === 'sm' ? 'px-2 py-0.5 text-[13px] gap-1' : 'px-3 py-1 text-xs gap-1.5';
+    size === 'sm' ? 'px-2 py-0.5 text-[14px] gap-1' : 'px-3 py-1 text-xs gap-1.5';
 
   return (
     <span

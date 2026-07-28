@@ -119,6 +119,7 @@ export const StructureViewerPage: React.FC = () => {
           <StructureViewerPlaceholder
             structureUrl={activeInhibitorResult?.structureFilePath}
             inhibitorName={activeInhibitorMeta.name}
+            inhibitorId={activeInhibitorId}
             className="flex-1"
           />
         </div>
@@ -139,7 +140,7 @@ export const StructureViewerPage: React.FC = () => {
         <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2.5 font-mono">
           대상 억제제 전환 (Ligand Switching Tabs):
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
           {INITIAL_INHIBITORS.map((inhibitor) => {
             const isSelected = inhibitor.id === activeInhibitorId;
             const res = job?.inhibitors?.find((i) => i.inhibitorId === inhibitor.id);
@@ -155,11 +156,11 @@ export const StructureViewerPage: React.FC = () => {
                     : 'bg-[#0b1020] border-[#243047] hover:bg-[#111827] text-gray-400 hover:text-gray-200'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-bold text-sm truncate">{inhibitor.name}</span>
+                <div className="flex flex-col items-start gap-1 mb-1.5">
+                  <span className="font-bold text-xs truncate w-full" title={inhibitor.name}>{inhibitor.name}</span>
                   {res && <StatusPill status={res.status} size="sm" />}
                 </div>
-                <span className="text-[13px] font-mono opacity-80 line-clamp-1">
+                <span className="text-[14px] font-mono opacity-80 line-clamp-1">
                   {res?.metrics && typeof res.metrics.cys145Distance === 'number'
                     ? `Cys145: ${res.metrics.cys145Distance.toFixed(2)}Å`
                     : '클릭하여 구조 렌더링'}

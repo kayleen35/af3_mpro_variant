@@ -195,14 +195,14 @@ export const OptimizationPage: React.FC = () => {
             {diffContext ? (
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">포켓별 WT → Mutant 변화</p>
+                  <p className="text-[12px] font-semibold text-gray-500 uppercase tracking-wider mb-1">포켓별 WT → Mutant 변화</p>
                   {Object.entries(diffContext.regionDiff).map(([region, info]) => (
                     <div key={region} className="flex items-center justify-between py-1.5 border-b border-[#1e2d40] last:border-0 gap-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="w-2 h-2 rounded-full shrink-0" style={{ background: info.color ?? '#3f4a5e' }} />
                         <span className="text-xs text-gray-300 truncate">{REGION_LABELS[region] ?? region}</span>
                       </div>
-                      <span className="text-[11px] font-mono shrink-0 text-right" style={{ color: info.color ?? '#6b7280' }}>
+                      <span className="text-[12px] font-mono shrink-0 text-right" style={{ color: info.color ?? '#6b7280' }}>
                         {info.quality === 'unchanged' ? 'WT 대비 변화 없음' : info.reason}
                       </span>
                     </div>
@@ -211,14 +211,14 @@ export const OptimizationPage: React.FC = () => {
 
                 <div className="space-y-2">
                   <div>
-                    <p className="text-[11px] text-gray-500 mb-1">WT (야생형, 고정)</p>
-                    <div className="rounded-lg bg-[#060d1a] p-2.5 border border-[#1e2d40] text-[11px] font-mono text-gray-400 break-all">
+                    <p className="text-[12px] text-gray-500 mb-1">WT (야생형, 고정)</p>
+                    <div className="rounded-lg bg-[#060d1a] p-2.5 border border-[#1e2d40] text-[12px] font-mono text-gray-400 break-all">
                       {diffContext.canonicalSmiles}
                     </div>
                   </div>
                   <div>
-                    <p className="text-[11px] text-gray-500 mb-1">Mutant (WT 대비 변화 하이라이트)</p>
-                    <div className="rounded-lg bg-[#060d1a] p-2.5 border border-[#1e2d40] text-[11px] font-mono break-all flex flex-wrap items-center gap-0.5">
+                    <p className="text-[12px] text-gray-500 mb-1">Mutant (WT 대비 변화 하이라이트)</p>
+                    <div className="rounded-lg bg-[#060d1a] p-2.5 border border-[#1e2d40] text-[12px] font-mono break-all flex flex-wrap items-center gap-0.5">
                       {diffContext.smilesTokens.map((tok, i) => (
                         <span
                           key={i}
@@ -266,7 +266,7 @@ export const OptimizationPage: React.FC = () => {
 
               {flaggedRegions.length > 0 ? (
                 <div className="p-2.5 rounded-lg bg-[#141b2d] border border-[#243047] text-xs space-y-1.5">
-                  <p className="text-gray-500 text-[11px] uppercase tracking-wider mb-1">손실 부위 수정 확인 (분석 시 자동 체크)</p>
+                  <p className="text-gray-500 text-[12px] uppercase tracking-wider mb-1">손실 부위 수정 확인 (분석 시 자동 체크)</p>
                   {flaggedRegions.map((f) => {
                     const addressed = regionPresence ? regionPresence[f.region] === false : null;
                     return (

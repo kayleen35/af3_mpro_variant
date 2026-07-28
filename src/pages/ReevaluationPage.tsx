@@ -315,7 +315,7 @@ export const ReevaluationPage: React.FC = () => {
           </div>
         )}
         {dockResult && (
-          <p className="text-[13px] text-gray-600 mt-3">
+          <p className="text-[14px] text-gray-600 mt-3">
             엔진: {dockResult.engine}. AF3가 예측한 parent 억제제의 mutant Mpro 포켓 좌표를 기준으로 parent/후보를 동일 조건에서 재도킹한 결과입니다.
             음수가 클수록 결합이 강하다는 뜻이며, 실제 억제 활성(IC50 등)을 의미하지 않습니다.
           </p>
@@ -387,7 +387,7 @@ export const ReevaluationPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            <p className="text-[13px] text-gray-600">
+            <p className="text-[14px] text-gray-600">
               parent 억제제의 원본 mutant 결합 구조와, 이 후보 SMILES로 mutant 서열에 대해 새로 실행한 AF3 결합 구조를 실측 비교한 결과입니다.
             </p>
 
@@ -428,7 +428,7 @@ function PropertyGrid({ mw, tpsa, clogp, mwDelta, tpsaDelta, clogpDelta }: {
           <div key={r.label} className="bg-[#0b1020] border border-[#243047] rounded-lg p-3 text-center">
             <div className="text-xs text-gray-500 mb-1">{r.label}</div>
             <div className="text-lg font-bold text-gray-200">{r.value.toFixed(2)}{r.unit}</div>
-            {d && <div className={`text-[13px] font-bold mt-0.5 ${d.className}`}>{d.text}</div>}
+            {d && <div className={`text-[14px] font-bold mt-0.5 ${d.className}`}>{d.text}</div>}
           </div>
         );
       })}
@@ -449,7 +449,7 @@ function AdmetRow({ admet }: { admet: { status: string; flags: string[]; advisor
       </div>
       {/* 위험이 아닌 참고 지표 — 순위 판정에는 반영하지 않는다 */}
       {admet.advisories && admet.advisories.length > 0 && (
-        <div className="text-[11px] text-gray-500">참고: {admet.advisories.join(', ')}</div>
+        <div className="text-[12px] text-gray-500">참고: {admet.advisories.join(', ')}</div>
       )}
     </div>
   );

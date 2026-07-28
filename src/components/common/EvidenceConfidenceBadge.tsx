@@ -23,11 +23,11 @@ export const EvidenceConfidenceBadge: React.FC<EvidenceConfidenceBadgeProps> = (
     <span
       title={desc}
       className={`inline-flex items-center gap-1 rounded-md border font-bold ring-1 transition-all ${
-        size === 'sm' ? 'px-1.5 py-0.5 text-[11px]' : 'px-2 py-1 text-xs'
+        size === 'sm' ? 'px-1.5 py-0.5 text-[12px]' : 'px-2 py-1 text-xs'
       } ${className}`}
     >
       {label}
-      {showDesc && <span className="font-normal text-[10px] opacity-80">{desc}</span>}
+      {showDesc && <span className="font-normal text-[11px] opacity-80">{desc}</span>}
     </span>
   );
 };

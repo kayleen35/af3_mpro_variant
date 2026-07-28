@@ -66,7 +66,7 @@ export const WorkflowStepper: React.FC<WorkflowStepperProps> = ({
                 onClick={() => step.path && onStepClick?.(step.id, step.path)}
                 disabled={!onStepClick}
                 title={step.label}
-                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium border transition-all ${CHIP_STYLE[status]} ${
+                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[12px] font-medium border transition-all ${CHIP_STYLE[status]} ${
                   isCurrent ? 'ring-1 ring-offset-1 ring-offset-[#0b1020] ring-cyan-400' : ''
                 } ${onStepClick ? 'cursor-pointer hover:brightness-110' : 'cursor-default'}`}
               >
@@ -121,7 +121,7 @@ export const WorkflowStepper: React.FC<WorkflowStepperProps> = ({
                   <span className="absolute -top-1 -right-1">{STATUS_ICON[status]}</span>
                 </button>
                 <div className="text-center">
-                  <p className={`text-[10px] font-medium leading-tight ${
+                  <p className={`text-[11px] font-medium leading-tight ${
                     status === 'completed' ? 'text-emerald-400'
                       : status === 'running' ? 'text-amber-400'
                       : status === 'ready' ? 'text-cyan-400'

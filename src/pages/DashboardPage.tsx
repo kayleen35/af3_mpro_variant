@@ -108,7 +108,12 @@ export const DashboardPage: React.FC = () => {
           {latestJob && (
             <div className="space-y-4">
               <h2 className="text-lg font-bold text-gray-100">최근 분석 진행률 ({latestJob.jobId})</h2>
-              <WorkflowStepper progress={deriveWorkflowProgress(latestJob)} currentStep="af3" onStepClick={(_, path) => navigate(path)} />
+              <WorkflowStepper
+                progress={deriveWorkflowProgress(latestJob)}
+                currentStep="af3"
+                // 어느 Job의 진행률인지 보여주는 스텝퍼이므로 그 Job을 그대로 넘긴다.
+                onStepClick={(_, path) => navigate(`${path}?jobId=${encodeURIComponent(latestJob.jobId)}`)}
+              />
             </div>
           )}
         </>

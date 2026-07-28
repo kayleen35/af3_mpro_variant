@@ -90,7 +90,7 @@ export const SequenceInputPage: React.FC = () => {
                   </option>
                 ))}
               </select>
-              <p className="text-[13px] text-gray-500 mt-1.5 font-mono">
+              <p className="text-[14px] text-gray-500 mt-1.5 font-mono">
                 * Wuhan-Hu-1 Wild-Type Mpro 서열 (306 아미노산)을 기본 템플릿으로 사용합니다.
               </p>
             </div>
@@ -148,7 +148,7 @@ export const SequenceInputPage: React.FC = () => {
                     placeholder="예: L50F/E166A/L167F"
                     className="w-full px-4 py-3.5 rounded-xl bg-[#141b2d] border border-[#243047] text-gray-100 font-mono text-sm placeholder:text-gray-600 focus:outline-none focus:border-cyan-500 transition-colors"
                   />
-                  <p className="text-[13px] text-gray-500">
+                  <p className="text-[14px] text-gray-500">
                     * 잔기 번호와 변이 아미노산을 입력하세요. (예: L50F는 50번 류신이 페닐알라닌으로 치환됨을 의미)
                   </p>
                 </div>
@@ -164,7 +164,7 @@ export const SequenceInputPage: React.FC = () => {
                     placeholder=">SARS-CoV-2 Mpro Mutant&#10;SGFRKMAFPSGKVEGCMVQVTCGTTTLNGLWLDDVVYCPRHVICTSEDMLNPNYEDLLIRKSNHNFLVQAGNVQLRVIGHSMQNCVLKLKVDTANPKTPKYKFVRIQPGQTFSVLACYNGSPSGVYQCAMRPNFTIKGSFLNGSCGSVGFNIDYDCVSFCYMHHMELPTGVHAGTDLEGNFYGPFVDRQTAQAAGTDTTITVNVLAWLYAAVINGDRWFLNRFTTTLNDFNLVAMKYNYEPLTQDHVDILGPLSAQTGIAVLDMCASLKELLQNGMNGRTILGSALLEDEFTPFDVVRQCSGVTFQ"
                     className="w-full p-4 rounded-xl bg-[#141b2d] border border-[#243047] text-gray-100 font-mono text-xs placeholder:text-gray-600 focus:outline-none focus:border-cyan-500 transition-colors leading-relaxed"
                   />
-                  <p className="text-[13px] text-gray-500">
+                  <p className="text-[14px] text-gray-500">
                     * 헤더 Line(&gt;)은 자동 필터링되며, 20개 표준 아미노산 기호만 허용됩니다.
                   </p>
                 </div>
@@ -215,7 +215,7 @@ export const SequenceInputPage: React.FC = () => {
                 <strong className="text-cyan-300">SARS-CoV-2 Mpro (3CLpro)</strong>는 바이러스 복제에 필수적인
                 시스테인 프로테아제로, 항바이러스제 개발의 가장 중요한 타겟 중 하나입니다.
               </p>
-              <div className="p-3 rounded-xl bg-[#141b2d] border border-[#243047] font-mono text-[13px] text-violet-300">
+              <div className="p-3 rounded-xl bg-[#141b2d] border border-[#243047] font-mono text-[14px] text-violet-300">
                 <span className="block font-bold text-gray-200 mb-1">Dimer-based Analysis</span>
                 Mpro는 2량체(Dimer) 상태에서 촉매 활성을 나타내므로, 본 플랫폼의 모든 AlphaFold3 연산은
                 Homodimer 복합체 모드로 고정 실행됩니다.
@@ -223,7 +223,7 @@ export const SequenceInputPage: React.FC = () => {
             </div>
 
             <div className="pt-3 border-t border-[#243047] space-y-3">
-              <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-500/40 flex items-start gap-2.5 text-[13px] text-amber-200/90">
+              <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-500/40 flex items-start gap-2.5 text-[14px] text-amber-200/90">
                 <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <div>
                   <span className="font-bold block text-amber-300 mb-0.5">Research Use Only</span>

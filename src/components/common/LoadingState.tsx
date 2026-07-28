@@ -50,7 +50,7 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
               style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
             />
           </div>
-          <div className="flex justify-between text-[13px] font-mono text-gray-400">
+          <div className="flex justify-between text-[14px] font-mono text-gray-400">
             <span>진행률</span>
             <span className="text-cyan-400 font-semibold">{Math.round(progress)}%</span>
           </div>

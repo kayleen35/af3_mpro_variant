@@ -10,8 +10,21 @@ declare global {
 export interface StructureViewerPlaceholderProps {
   structureUrl?: string;
   inhibitorName?: string;
+  /** H-Bonds 토글 시 서버 수소결합 판정을 요청하기 위한 억제제 ID */
+  inhibitorId?: string;
   onExportCommand?: () => void;
   className?: string;
+}
+
+/** 서버(structure_analysis.py)가 판정한 수소결합 1건 — 양 끝 원자 좌표 포함 */
+interface HBondDetail {
+  lig_atom: string;
+  prot_resname: string;
+  prot_resseq: number;
+  prot_atom: string;
+  distance: number;
+  lig_xyz: [number, number, number];
+  prot_xyz: [number, number, number];
 }
 
 interface ToolbarOption {
@@ -20,17 +33,25 @@ interface ToolbarOption {
   icon: React.ComponentType<{ className?: string }>;
 }
 
+/** 포켓 표면 반경 (Å) — ChimeraX `surface protein & ligand :< 8` 과 동일 기준 */
+const POCKET_RADIUS = 8;
+/** 표면 투명도 — ChimeraX `transparency #1 55 target s` (55% 투명 = opacity 0.45) */
+const POCKET_TRANSPARENCY = 55;
+
 const toolbarOptions: ToolbarOption[] = [
   { id: 'protein', label: 'Protein (Ribbon)', icon: Layers },
   { id: 'ligand', label: 'Ligand (Stick)', icon: Shield },
   { id: 'active_site', label: 'Active Site (H41, C145)', icon: Eye },
   { id: 'h_bonds', label: 'H-Bonds', icon: Sparkles },
-  { id: 'surface', label: 'Electrostatic Surface', icon: Box },
+  // 정전기 포텐셜을 계산하지 않으므로 'Electrostatic'이라 부르지 않는다 —
+  // 실제로 그리는 것은 리간드 주변 8Å 잔기의 분자 표면.
+  { id: 'surface', label: `Pocket Surface (≤ ${POCKET_RADIUS} Å)`, icon: Box },
 ];
 
 export const StructureViewerPlaceholder: React.FC<StructureViewerPlaceholderProps> = ({
   structureUrl,
   inhibitorName = 'Nirmatrelvir',
+  inhibitorId,
   onExportCommand,
   className = '',
 }) => {
@@ -48,6 +69,10 @@ export const StructureViewerPlaceholder: React.FC<StructureViewerPlaceholderProp
   const [cifText, setCifText] = useState<string | null>(null);
   const [is3DmolReady, setIs3DmolReady] = useState<boolean>(!!window.$3Dmol);
   const [loadingMsg, setLoadingMsg] = useState<string>('3D 구조 데이터 파싱 중...');
+
+  // 수소결합은 임의로 그리지 않고 서버 판정(3.5Å 도너/억셉터 규칙)을 그대로 받아 쓴다.
+  const [hbonds, setHbonds] = useState<HBondDetail[] | null>(null);
+  const [hbondState, setHbondState] = useState<'idle' | 'loading' | 'error'>('idle');
 
   // URL 절대 경로 변환 (Vite 프록시 이슈 방지)
   const resolveStructureUrl = (url?: string) => {
@@ -114,6 +139,36 @@ export const StructureViewerPlaceholder: React.FC<StructureViewerPlaceholderProp
       });
   }, [targetUrl]);
 
+  // 2-b. H-Bonds 토글을 켰을 때만 서버에 수소결합 판정을 요청한다(구조당 1회).
+  useEffect(() => {
+    if (!activeToggles.h_bonds || hbonds || hbondState === 'loading' || !structureUrl) return;
+
+    setHbondState('loading');
+    fetch('http://localhost:8000/api/structure/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filepath: structureUrl, inhibitorId }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        setHbonds(data?.hbonds?.details ?? []);
+        setHbondState('idle');
+      })
+      .catch((err) => {
+        console.error('H-bond 판정 실패:', err);
+        setHbondState('error');
+      });
+  }, [activeToggles.h_bonds, hbonds, hbondState, structureUrl, inhibitorId]);
+
+  // 구조가 바뀌면(억제제 전환 등) 이전 수소결합 결과는 버린다.
+  useEffect(() => {
+    setHbonds(null);
+    setHbondState('idle');
+  }, [structureUrl]);
+
   // 3. WebGL 3Dmol.js 렌더링 실행
   useEffect(() => {
     if (!is3DmolReady || !cifText || !containerRef.current) return;
@@ -149,12 +204,55 @@ export const StructureViewerPlaceholder: React.FC<StructureViewerPlaceholderProp
         );
       }
 
+      // 수소결합: 서버가 판정한 원자쌍을 점선 실린더로 잇고 거리를 라벨로 표시.
+      if (activeToggles.h_bonds && hbonds?.length) {
+        hbonds.forEach((hb) => {
+          const [lx, ly, lz] = hb.lig_xyz;
+          const [px, py, pz] = hb.prot_xyz;
+          viewer.addCylinder({
+            start: { x: lx, y: ly, z: lz },
+            end: { x: px, y: py, z: pz },
+            radius: 0.06,
+            color: '#facc15',
+            dashed: true,
+            fromCap: 1,
+            toCap: 1,
+          });
+          viewer.addLabel(`${hb.distance.toFixed(2)}Å`, {
+            position: { x: (lx + px) / 2, y: (ly + py) / 2, z: (lz + pz) / 2 },
+            fontSize: 10,
+            fontColor: '#fde68a',
+            backgroundColor: '#0b1020',
+            backgroundOpacity: 0.75,
+          });
+        });
+
+        // 결합에 참여하는 잔기는 stick으로 같이 보여줘야 어디에 붙는지 보인다.
+        const resis = [...new Set(hbonds.map((h) => h.prot_resseq))];
+        viewer.addStyle({ resi: resis }, { stick: { colorscheme: 'whiteCarbon', radius: 0.15 } });
+      }
+
+      // 포켓 표면 — ChimeraX의
+      //   surface protein & ligand :< 8
+      //   transparency #1 55 target s
+      // 와 동등: 리간드(chain C) 기준 8Å 이내의 단백질 잔기만 표면으로, 55% 투명 처리.
+      if (activeToggles.surface) {
+        viewer.addSurface(
+          window.$3Dmol.SurfaceType.VDW,
+          { opacity: 1 - POCKET_TRANSPARENCY / 100, color: '#7fd4e3' },
+          {
+            chain: ['A', 'B'],
+            within: { distance: POCKET_RADIUS, sel: { chain: 'C' } },
+          }
+        );
+      }
+
       viewer.zoomTo();
       viewer.render();
     } catch (err) {
       console.error('3Dmol render error:', err);
     }
-  }, [is3DmolReady, cifText, activeToggles]);
+  }, [is3DmolReady, cifText, activeToggles, hbonds]);
 
   // 4. 컨테이너 크기 변화 추적 — 3Dmol은 createViewer 시점의 컨테이너 크기로 캔버스를
   //    고정하므로, 레이아웃이 늦게 확정되는 위치(조건부 렌더링 블록 등)에 마운트되면
@@ -180,6 +278,20 @@ export const StructureViewerPlaceholder: React.FC<StructureViewerPlaceholderProp
   const handleToggle = (id: string) => {
     setActiveToggles((prev) => ({ ...prev, [id]: !prev[id] }));
   };
+
+  // 지금 켜져 있는 표시 옵션과 동등한 ChimeraX 명령을 그대로 노출한다 —
+  // 사용자가 ChimeraX에서 같은 장면을 재현해 교차 검증할 수 있도록.
+  const chimeraxCommands: string[] = [];
+  if (activeToggles.surface) {
+    chimeraxCommands.push(`surface protein & ligand :< ${POCKET_RADIUS}`);
+    chimeraxCommands.push(`transparency #1 ${POCKET_TRANSPARENCY} target s`);
+  }
+  if (activeToggles.h_bonds) {
+    chimeraxCommands.push('hbonds #1 & ligand restrict #1/A log true');
+  }
+  if (activeToggles.active_site) {
+    chimeraxCommands.push('show #1:41,145 atoms');
+  }
 
   const handleDownloadCif = () => {
     window.open(targetUrl, '_blank');
@@ -209,6 +321,17 @@ export const StructureViewerPlaceholder: React.FC<StructureViewerPlaceholderProp
               >
                 <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-cyan-400' : 'text-gray-500'}`} />
                 <span>{opt.label}</span>
+                {opt.id === 'h_bonds' && isActive && (
+                  <span className="font-mono text-[11px] text-amber-300">
+                    {hbondState === 'loading'
+                      ? '판정 중…'
+                      : hbondState === 'error'
+                      ? '판정 실패'
+                      : hbonds
+                      ? `${hbonds.length}개`
+                      : ''}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -271,10 +394,24 @@ export const StructureViewerPlaceholder: React.FC<StructureViewerPlaceholderProp
         )}
 
         {/* Top-left badge over canvas */}
-        <div className="absolute top-4 left-4 z-10 pointer-events-none">
+        <div className="absolute top-4 left-4 z-10 pointer-events-none space-y-2">
           <div className="inline-block px-3 py-1 rounded-full text-xs font-mono bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 shadow-lg">
             3Dmol.js WebGL Engine (AlphaFold 3 Dimer Mode)
           </div>
+
+          {/* 현재 화면과 동등한 ChimeraX 명령 — 외부 검증용 */}
+          {chimeraxCommands.length > 0 && (
+            <div className="block px-3 py-2 rounded-lg bg-[#0b1020]/85 border border-[#243047] shadow-lg backdrop-blur-md">
+              <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                ChimeraX 동등 명령어
+              </div>
+              {chimeraxCommands.map((cmd) => (
+                <div key={cmd} className="text-[11px] font-mono text-emerald-300 leading-relaxed">
+                  {cmd}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Bottom stats widget overlay */}

@@ -243,6 +243,11 @@ def compute_hbonds(protein, ligand, d_cutoff=HBOND_CUTOFF):
                     'prot_atom': pa['name'],
                     'prot_element': el_p,
                     'distance': round(d, 3),
+                    # 3D 뷰어가 결합선을 그릴 수 있도록 양 끝 원자 좌표를 함께 넘긴다 —
+                    # 클라이언트가 mmCIF를 다시 파싱해 원자를 재탐색하면 서버 판정과
+                    # 어긋날 수 있으므로 여기서 계산한 좌표를 그대로 쓴다.
+                    'lig_xyz': [round(v, 3) for v in la['xyz']],
+                    'prot_xyz': [round(v, 3) for v in pa['xyz']],
                 })
     # 중복 제거 (같은 원자쌍)
     seen = set()
