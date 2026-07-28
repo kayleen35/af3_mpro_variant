@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, Layers, Eye, Shield, Sparkles, Sliders, Maximize2, Download, RefreshCw } from 'lucide-react';
+import { Box, Layers, Eye, Shield, Sparkles, Download, RefreshCw } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -156,6 +156,27 @@ export const StructureViewerPlaceholder: React.FC<StructureViewerPlaceholderProp
     }
   }, [is3DmolReady, cifText, activeToggles]);
 
+  // 4. 컨테이너 크기 변화 추적 — 3Dmol은 createViewer 시점의 컨테이너 크기로 캔버스를
+  //    고정하므로, 레이아웃이 늦게 확정되는 위치(조건부 렌더링 블록 등)에 마운트되면
+  //    캔버스 폭이 0인 채로 남아 구조가 아예 보이지 않는다. 크기가 바뀔 때마다 resize().
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+
+    const observer = new ResizeObserver(() => {
+      const viewer = viewerInstanceRef.current;
+      if (!viewer) return;
+      try {
+        viewer.resize();
+        viewer.render();
+      } catch (err) {
+        console.error('3Dmol resize error:', err);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const handleToggle = (id: string) => {
     setActiveToggles((prev) => ({ ...prev, [id]: !prev[id] }));
   };
@@ -228,7 +249,7 @@ export const StructureViewerPlaceholder: React.FC<StructureViewerPlaceholderProp
       </div>
 
       {/* Main 3D WebGL Viewer Area */}
-      <div className="flex-1 relative flex flex-col items-center justify-center bg-gradient-to-b from-[#070b18] via-[#040711] to-[#070b18] min-h-[460px]">
+      <div className="flex-1 relative flex flex-col items-center justify-center bg-[#0b1020] min-h-[460px]">
         {/* WebGL Container */}
         <div
           ref={containerRef}
@@ -239,7 +260,7 @@ export const StructureViewerPlaceholder: React.FC<StructureViewerPlaceholderProp
         {/* Loading / Empty Overlay when 3Dmol isn't mounted yet */}
         {(!cifText || !is3DmolReady) && (
           <div className="relative z-10 flex flex-col items-center justify-center p-8 text-center pointer-events-none">
-            <div className="w-16 h-16 rounded-2xl bg-[#111827] border border-cyan-500/40 shadow-xl shadow-cyan-500/10 flex items-center justify-center animate-spin mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-[#111827] border border-cyan-500/40 shadow-xl  flex items-center justify-center animate-spin mb-4">
               <Box className="w-8 h-8 text-cyan-400" />
             </div>
             <h3 className="text-base font-bold text-gray-200 mb-1">

@@ -1,13 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, Cpu, Dna, ArrowRight } from 'lucide-react';
-import { EmptyState, ResearchBadge } from '../components/common';
+import { ShieldCheck, Cpu, Dna, ArrowRight, Activity, Zap } from 'lucide-react';
+import { EmptyState, ResearchBadge, MetricCard, WorkflowStepper } from '../components/common';
 import { INITIAL_INHIBITORS } from '../types/inhibitor';
 import { InhibitorCard } from '../components/inhibitor';
+import { getJobsList, type JobSummary } from '../api/analysisApi';
+import type { WorkflowStepStatus } from '../types/analysis';
+
+// 가장 최근 Job의 실제 상태만으로 계산 가능한 워크플로우 진행 상태
+// (스크리닝/최적화/재평가/최종비교 단계는 아직 job 목록 API가 추적하지 않아 정직하게 'not_started'로 둔다)
+function deriveWorkflowProgress(job: JobSummary): Partial<Record<string, WorkflowStepStatus>> {
+  const af3Done = job.inhibitorCount > 0 && job.completedCount >= job.inhibitorCount;
+  const af3Running = job.status.includes('predicting') || job.status.includes('partial_completed');
+  return {
+    sequence: 'completed',
+    mutation: 'completed',
+    screening: 'not_started',
+    af3: af3Done ? 'completed' : af3Running ? 'running' : job.inhibitorCount > 0 ? 'running' : 'not_started',
+    interaction: 'not_started',
+    optimization: 'not_started',
+    reevaluation: 'not_started',
+    final: 'not_started',
+  };
+}
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [engineStatus, setEngineStatus] = useState<string>('CHECKING WSL ENGINE...');
+  const [jobs, setJobs] = useState<JobSummary[] | null>(null);
 
   useEffect(() => {
     fetch('http://localhost:8000/api/af3/health')
@@ -20,12 +40,19 @@ export const DashboardPage: React.FC = () => {
         }
       })
       .catch(() => setEngineStatus('WSL ENGINE OFFLINE'));
+
+    getJobsList()
+      .then((res) => setJobs(res.jobs))
+      .catch(() => setJobs([]));
   }, []);
+
+  const latestJob = jobs && jobs.length > 0 ? jobs[0] : null;
+  const totalCompletedStructures = (jobs || []).reduce((sum, j) => sum + j.completedCount, 0);
 
   return (
     <div className="space-y-8 animate-fadeIn">
       {/* Top Welcome Banner */}
-      <div className="card-base p-8 bg-gradient-to-r from-[#111827] via-[#141d33] to-[#111827] border-cyan-500/30 shadow-xl relative overflow-hidden">
+      <div className="card-base p-8 bg-[#111827] border-cyan-500/30 shadow-xl relative overflow-hidden">
         <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-10 -top-10 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -45,7 +72,7 @@ export const DashboardPage: React.FC = () => {
             </h1>
             <p className="text-sm md:text-base text-gray-300 leading-relaxed">
               로컬 Ubuntu AlphaFold3 서버를 활용한 SARS-CoV-2 메인 프로테아제(Mpro, 3CLpro) 변이체 구조 분석 및
-              5개 핵심 억제제의 복합체 결합 예측 전문 플랫폼입니다.
+              16개 핵심 억제제의 복합체 결합 예측 전문 플랫폼입니다.
             </p>
           </div>
 
@@ -60,6 +87,32 @@ export const DashboardPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {jobs === null ? null : jobs.length === 0 ? (
+        <EmptyState
+          title="진행된 변이체 분석 내역이 없습니다"
+          description="현재 로컬 데이터베이스 또는 메모리 저장소에 완료된 분석 Job이 없습니다. 우측 상단의 버튼을 눌러 첫 변이 분석을 실행해보세요."
+          actionLabel="+ 첫 분석 실행하기"
+          onAction={() => navigate('/sequence')}
+        />
+      ) : (
+        <>
+          {/* KPI Cards — 실제 job 목록에서 계산 */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <MetricCard title="총 분석 Job 수" value={jobs.length} icon={Activity} />
+            <MetricCard title="AF3 완료 구조" value={totalCompletedStructures} subtitle="전체 Job 합산" icon={Zap} iconColor="text-amber-400" />
+            <MetricCard title="최근 Job 상태" value={latestJob!.mutationLabel} subtitle={latestJob!.status} icon={Dna} iconColor="text-cyan-400" />
+          </div>
+
+          {/* Workflow Progress — 가장 최근 Job 기준 */}
+          {latestJob && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold text-gray-100">최근 분석 진행률 ({latestJob.jobId})</h2>
+              <WorkflowStepper progress={deriveWorkflowProgress(latestJob)} currentStep="af3" onStepClick={(_, path) => navigate(path)} />
+            </div>
+          )}
+        </>
+      )}
 
       {/* Quick Info Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -94,27 +147,11 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Analysis History Section (Empty state when no real analyses are present) */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-100 flex items-center gap-2">
-            <span>최근 분석 내역</span>
-          </h2>
-        </div>
-
-        <EmptyState
-          title="진행된 변이체 분석 내역이 없습니다"
-          description="현재 로컬 데이터베이스 또는 메모리 저장소에 완료된 분석 Job이 없습니다. 우측 상단의 버튼을 눌러 첫 변이 분석을 실행해보세요."
-          actionLabel="+ 첫 분석 실행하기"
-          onAction={() => navigate('/sequence')}
-        />
-      </div>
-
       {/* Targeted Inhibitor List Overview */}
       <div className="space-y-4 pt-2">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-gray-100">분석 대상 핵심 억제제 16종</h2>
+            <h2 className="text-lg font-bold text-gray-100">분석 대상 핵심 억제제 {INITIAL_INHIBITORS.length}종</h2>
             <p className="text-xs text-gray-400 mt-0.5">
               논문 흐름 및 연구 목적에 맞춰 구성된 Mpro 표적 후보군입니다. (임의 약효 수치 배제)
             </p>

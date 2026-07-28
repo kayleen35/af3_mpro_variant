@@ -154,7 +154,7 @@ export const InhibitorComparisonPage: React.FC = () => {
                   <h3 className="font-bold text-base text-gray-100">{item.name}</h3>
                   <StatusPill status={item.status} size="sm" />
                 </div>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#141b2d] text-gray-400 border border-[#243047]">
+                <span className="text-[13px] font-mono px-2 py-0.5 rounded bg-[#141b2d] text-gray-400 border border-[#243047]">
                   ID: {item.inhibitorId}
                 </span>
               </div>
@@ -205,10 +205,11 @@ export const InhibitorComparisonPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400">Steric Clash:</span>
                     <span className="flex items-center gap-1">
-                      {(metrics.hasClash ?? 0) > 0 ? (
+                      {/* AF3 엔진은 stericClash를 'Yes'/'No' 문자열 또는 boolean으로 반환한다 */}
+                      {(metrics.hasClash === true || String(metrics.hasClash) === 'Yes') ? (
                         <>
                           <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
-                          <span className="text-rose-400">감지됨 ({(metrics.hasClash * 100).toFixed(1)}%)</span>
+                          <span className="text-rose-400">감지됨</span>
                         </>
                       ) : (
                         <>

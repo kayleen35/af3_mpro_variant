@@ -15,7 +15,7 @@ export const AppLayout: React.FC = () => {
         <Sidebar />
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-gradient-to-b from-[#070b18] via-[#080d1e] to-[#070b18]">
+        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-[#080d1e]">
           <div className="max-w-7xl mx-auto min-h-[calc(100vh-10rem)] flex flex-col justify-between">
             {/* Page Router Outlet */}
             <div className="flex-1">

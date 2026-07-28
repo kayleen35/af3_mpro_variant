@@ -30,7 +30,7 @@ export const InhibitorCard: React.FC<InhibitorCardProps> = ({
         selectable ? 'cursor-pointer select-none card-hover' : ''
       } ${
         selected
-          ? 'bg-[#141b2d] border-cyan-500/60 shadow-md shadow-cyan-500/10'
+          ? 'bg-[#141b2d] border-cyan-500/60 shadow-md '
           : 'bg-[#0b1020]/80 hover:bg-[#111827] opacity-80 hover:opacity-100'
       } ${className}`}
     >
@@ -48,7 +48,7 @@ export const InhibitorCard: React.FC<InhibitorCardProps> = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h4 className="font-bold text-sm text-gray-100 truncate">{inhibitor.name}</h4>
-            <span className="text-[10px] px-2 py-0.5 rounded font-mono bg-violet-950/50 text-violet-300 border border-violet-500/30">
+            <span className="text-[13px] px-2 py-0.5 rounded font-mono bg-violet-950/50 text-violet-300 border border-violet-500/30">
               Ligand
             </span>
           </div>
@@ -56,10 +56,10 @@ export const InhibitorCard: React.FC<InhibitorCardProps> = ({
             {inhibitor.description || inhibitor.label}
           </p>
 
-          {inhibitor.metadata && inhibitor.metadata.target && (
-            <div className="mt-2.5 pt-2 border-t border-[#243047]/60 flex items-center gap-1.5 text-[11px] text-gray-500 font-mono">
+          {inhibitor.developmentStatusLabel && (
+            <div className="mt-2.5 pt-2 border-t border-[#243047]/60 flex items-center gap-1.5 text-[13px] text-gray-500 font-mono">
               <Info className="w-3 h-3 text-cyan-400 shrink-0" />
-              <span className="truncate">Target: {inhibitor.metadata.target}</span>
+              <span className="truncate">Stage: {inhibitor.developmentStatusLabel}</span>
             </div>
           )}
         </div>

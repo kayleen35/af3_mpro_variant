@@ -8,12 +8,12 @@ export interface ValidationResult {
  * 예: L50F/E166A/L167F 또는 L50F, E166A
  */
 export const validateMutationText = (text?: string): ValidationResult => {
+  // 빈 칸 = 야생형(WT) 분석 — 허용
   if (!text || text.trim().length === 0) {
-    return { valid: false, errorMessage: '변이 표기를 입력해주세요. (예: L50F/E166A/L167F)' };
+    return { valid: true };
   }
 
   const cleanText = text.trim();
-  // 정규식: 1개 이상의 아미노산(1문자 또는 3문자) + 위치(숫자) + 변이아미노산, 구분자는 /, comma, 공백
   const mutationParts = cleanText.split(/[\/,;\s]+/).filter(Boolean);
 
   if (mutationParts.length === 0) {

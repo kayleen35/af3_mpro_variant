@@ -1,5 +1,29 @@
 @import "tailwindcss";
 
+@theme {
+  /* Main Color 1: Mint Green (Primary UI) */
+  --color-cyan-300: #B3EFB2;
+  --color-cyan-400: #B3EFB2;
+  --color-cyan-500: #8FD88E;
+  --color-cyan-600: #6ABF69;
+  --color-cyan-700: #4B9E4A;
+  --color-cyan-900: #163616;
+
+  /* Main Color 2: Ice Blue (Secondary UI) */
+  --color-violet-300: #DBE9EE;
+  --color-violet-400: #DBE9EE;
+  --color-violet-500: #B5D2DE;
+  --color-violet-600: #8CB8C9;
+  --color-violet-700: #6A9CAE;
+  --color-violet-950: #294D5C;
+
+  /* Accent Color: Coral */
+  --color-rose-300: #FF5A5F;
+  --color-rose-400: #FF5A5F;
+  --color-rose-500: #E6454A;
+  --color-rose-600: #CC3338;
+}
+
 @layer base {
   body {
     background-color: #070b18;
@@ -15,13 +39,16 @@
     width: 8px;
     height: 8px;
   }
+
   ::-webkit-scrollbar-track {
     background: #0b1020;
   }
+
   ::-webkit-scrollbar-thumb {
     background: #243047;
     border-radius: 4px;
   }
+
   ::-webkit-scrollbar-thumb:hover {
     background: #33415c;
   }
@@ -34,9 +61,11 @@
     border: 1px solid #243047;
     border-radius: 0.75rem;
   }
+
   .card-hover {
     transition: all 0.2s ease-in-out;
   }
+
   .card-hover:hover {
     border-color: #38bdf8;
     box-shadow: 0 4px 20px -2px rgba(56, 189, 248, 0.15);

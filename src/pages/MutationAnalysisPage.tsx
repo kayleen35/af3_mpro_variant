@@ -189,7 +189,7 @@ export const MutationAnalysisPage: React.FC = () => {
                     <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                   )}
                 </div>
-                <span className="text-[10px] text-gray-400 leading-tight font-mono">{item.role}</span>
+                <span className="text-[13px] text-gray-400 leading-tight font-mono">{item.role}</span>
               </div>
             );
           })}

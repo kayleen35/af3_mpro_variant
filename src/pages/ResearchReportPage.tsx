@@ -57,7 +57,7 @@ export const ResearchReportPage: React.FC = () => {
     return (
       <LoadingState
         title="최종 종합 연구 보고서 생성 중..."
-        description="변이 내역과 5개 억제제 결합 예측 지표를 집합하여 인쇄 및 데이터 내보내기용 문서를 편성하고 있습니다."
+        description="변이 내역과 억제제 결합 예측 지표를 집합하여 인쇄 및 데이터 내보내기용 문서를 편성하고 있습니다."
         step="Compiling Structural Research Report"
       />
     );
@@ -220,7 +220,7 @@ export const ResearchReportPage: React.FC = () => {
       {/* Section 3: Inhibitor Modeling Summary */}
       <div className="card-base p-6 bg-[#0b1020] border-[#243047] space-y-4">
         <h2 className="text-lg font-bold text-gray-100 border-b border-[#243047] pb-2.5">
-          3. 5개 핵심 억제제 결합 예측 기하 지표
+          3. 핵심 억제제 결합 예측 기하 지표
         </h2>
         <div className="overflow-hidden rounded-xl border border-[#243047]">
           <table className="w-full text-left border-collapse text-xs font-mono">
@@ -283,7 +283,7 @@ export const ResearchReportPage: React.FC = () => {
       </div>
 
       {/* Highlighted Research Use Only Warning Notice */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-amber-950/40 via-rose-950/30 to-amber-950/40 border-2 border-amber-500/50 shadow-xl flex items-start gap-4">
+      <div className="p-6 rounded-2xl bg-[#0b1020] border-2 border-amber-500/50 shadow-xl flex items-start gap-4">
         <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
           <ShieldAlert className="w-7 h-7 stroke-[1.75]" />
         </div>

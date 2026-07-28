@@ -1,156 +1,186 @@
 # 🧬 SARS-CoV-2 Mpro-Variant Binder Research Platform
 
-**로컬 Ubuntu AlphaFold3 기반 SARS-CoV-2 메인 프로테아제(Mpro, 3CLpro) 변이체 구조 분석 및 5개 핵심 억제제 복합체 모델링 웹 애플리케이션 프론트엔드/백엔드 뼈대**
+**로컬 WSL2 AlphaFold3 GPU 엔진 기반 SARS-CoV-2 메인 프로테아제(Mpro, 3CLpro) 변이체 구조 분석 → 결합 취약부 진단 → 유도체 설계 → 실측 재검증까지 이어지는 풀스택 연구용 파이프라인**
 
 ---
 
-## 🌟 프로젝트 개요 및 핵심 원칙
+## 🌟 프로젝트 개요
 
-본 프로젝트는 최신 React 19 + TypeScript + Vite + Tailwind CSS v4 기반의 프리미엄 Dark Navy UI 프론트엔드와 Node.js/Express 기반의 로컬 AlphaFold3 API 중개 Proxy 서버로 구성된 연구용 풀스택 웹 애플리케이션입니다.
+WT(야생형) Mpro와 사용자가 지정한 변이체(Mutant) Mpro에 대해 실제 억제제들의 결합을 AlphaFold3로 예측·비교하고, 결합력이 약해진 부위를 구조적으로 진단한 뒤, 그 부위를 보완하는 유도체(derivative)를 직접 설계하고, RDKit 물성 계산·QuickVina2 재도킹·AF3 재추론이라는 세 가지 실측 방법으로 그 유도체가 실제로 더 잘 붙는지 검증하는 것까지 하나의 흐름으로 연결한 연구용 웹 애플리케이션입니다.
 
 > [!IMPORTANT]
-> **엄격한 설계 및 데이터 무결성 원칙 준수**
-> 1. **임의 약효 수치 및 더미 데이터 생성 절대 금지**: 생체 외/임상 효능을 나타내는 임의의 IC50, Ki 수치나 임의의 결합 친화도 점수, 임의의 거리값 등을 절대 자동 생성하거나 주입하지 않습니다. 실제 AlphaFold3 연산 결과가 없을 경우 빈 상태(`EmptyState`), 로딩 상태(`LoadingState`), 또는 에러 상태(`ErrorState`)만을 명확하게 표기합니다.
-> 2. **Mpro Homodimer Mode 고정**: SARS-CoV-2 Mpro는 2량체(Homodimer) 상태에서 촉매 활성을 나타내므로, 본 플랫폼의 모든 AlphaFold3 모델링 요청은 `dimerMode: true`로 고정 실행됩니다.
-> 3. **논문 흐름에 맞춘 5개 핵심 억제제 구성**: Nirmatrelvir, Ensitrelvir, Leritrelvir, GC376, Compound 4 등 Mpro 활성 포켓을 타겟하는 표준 리가нд로만 구성됩니다.
-> 4. **Research Use Only 강조**: 본 플랫폼은 인실리코(In-silico) 기초 구조 연구 및 후보물질 탐색 전용 도구이며, 임상 진단이나 치료 의사결정에 절대 사용할 수 없습니다.
+> **데이터 무결성 원칙**
+> 1. **임의 수치 생성 금지**: IC50/Ki/결합 친화도 등 임의의 생체 지표를 하드코딩하거나 난수로 만들지 않습니다. 실제 계산이 끝나지 않았으면 `EmptyState`/`LoadingState`/`ErrorState`로 정직하게 표시합니다.
+> 2. **Mpro Homodimer Mode 고정**: Mpro는 2량체 상태에서만 촉매 활성을 가지므로 모든 AF3 요청은 `dimerMode: true`로 고정됩니다.
+> 3. **Research Use Only**: 임상 진단·치료 의사결정에 사용할 수 없는 인실리코 연구 전용 도구입니다.
+> 4. **본 프로젝트는 포트폴리오/학습 목적**으로 제작되었으며 배포를 전제로 하지 않아 보안 하드닝(인증, 인메모리 저장소의 영속화 등)은 의도적으로 최소화되어 있습니다.
 
 ---
 
-## 📂 시스템 아키텍처 및 디렉토리 구조
+## 🔬 전체 파이프라인 (8단계)
+
+사이드바 순서 그대로, 각 단계가 이전 단계의 **실측 결과**를 그대로 이어받아 사용합니다 (일반적인 SAR 지식이 아니라 "이번 변이/이번 후보에서 실제로 계산된 값"을 기반으로 다음 단계가 진행됩니다).
+
+| 단계 | 라우트 | 화면 | 하는 일 |
+|---|---|---|---|
+| 0 | `/sequence` | 서열 및 변이 입력 | Wuhan-Hu-1 WT 서열 또는 FASTA 직접 입력, 변이 표기(`E166A/L167F` 등) 지정 |
+| 1 | `/screening` | 도킹 내성 지도 | RDKit 규칙 기반 스크리닝으로 억제제 후보군 1차 필터링 |
+| — | `/prediction` | AF3 결합 예측 (실행) | 선택한 억제제들에 대해 WT/Mutant 각각 AlphaFold3 GPU 추론 실행 (WSL2, dimer 고정) |
+| 2 | `/interaction` | 결합 붕괴 분석 | WT vs Mutant의 잔기별 접촉수·H-bond·pLDDT·매몰 면적을 실측 비교 |
+| — | `/molecule` | 결합 취약부 2D 시각화 | WT 대비 Mutant에서 **실제로 약해지거나 소실된** 파마코포어 영역만 2D 구조 위에 하이라이트 |
+| 3 | `/optimization` | 유도체 설계 | Step 7에서 넘어온 실측 손실 부위를 참고해 SMILES를 직접 수정, RDKit으로 즉시 재분석 |
+| 4 | `/reevaluation` | 결합 재검증 | parent 대비 물성 변화 + **QuickVina2 재도킹** + **AF3 GPU 재추론**, 세 가지 실측 방법으로 후보를 검증 |
+| 5 | `/final-ranking` | ADMET 평가 | 모든 후보를 구조 복원력·독성·비강 전달 적합성 세 축으로 다차원 순위표에 정리 |
+
+---
+
+## 🏗️ 시스템 아키텍처
+
+```
+┌─────────────────────────────┐        ┌──────────────────────────────┐        ┌───────────────────────────┐
+│  React 19 + TS + Vite        │  HTTP  │  Node/Express Proxy (:8000)   │  HTTP  │  WSL2 Ubuntu (:8080)        │
+│  Tailwind v4, Dark Navy UI   │ ─────► │  server/index.js              │ ─────► │  af3_engine_server.py       │
+│  (Windows, :5174)             │        │  - jobStore (in-memory Map)   │        │  - AlphaFold3 GPU 추론       │
+└─────────────────────────────┘        │  - Python 스크립트 spawn       │        │  - run_alphafold.py         │
+                                        │    (conda env: af3-rdkit)      │        │  - RTX 4070, 모델 가중치     │
+                                        └───────────┬────────────────────┘        └──────────────────────────┘
+                                                    │ spawn(conda run -n af3-rdkit python ...)
+                                        ┌───────────▼────────────────────┐
+                                        │  RDKit 기반 Python 스크립트들     │
+                                        │  structure_analysis.py          │  CIF 파싱 → 접촉/H-bond/pLDDT
+                                        │  molecule_highlight.py          │  2D SVG + WT-vs-Mutant diff 하이라이트
+                                        │  derivative_analysis.py         │  후보 SMILES 물성/ADMET 계산
+                                        │  docking_service.py             │  QuickVina2 (AutoDock Vina 대체)
+                                        │  screening_service.py           │  RDKit 규칙 기반 1차 스크리닝
+                                        └──────────────────────────────────┘
+```
+
+Windows 노트북에서 프론트/백엔드가 돌고, 실제 GPU 연산(AlphaFold3, RTX 4070)은 **WSL2 Ubuntu 안의 별도 HTTP 서버**가 담당합니다. Node 서버는 이 WSL 엔진과 여러 RDKit Python 스크립트(별도 conda 환경 `af3-rdkit`) 사이를 중개하는 얇은 Proxy 역할입니다.
+
+> Windows에는 `vina` PyPI 패키지의 사전 빌드 wheel이 없어(Boost 빌드 필요) AutoDock Vina 대신 conda-forge의 **QuickVina2**(`qvina2.exe`)를 씁니다. 플랫폼 자체가 보고한 포지티브 컨트롤 결합에너지 값을 재현하는 것으로 검증했습니다.
+
+---
+
+## 🧩 핵심 기술 메커니즘
+
+### 1. 파마코포어 영역 모델 (Warhead / P1 / P2)
+Nirmatrelvir 계열 억제제 결합에 관여하는 3개 영역을 SMARTS 패턴 + 고정된 "핵심 잔기 번호"로 정의합니다 (`server/molecule_highlight.py`):
+
+- **Warhead** — Cys145과의 공유결합 지점 (nitrile, ketoamide 등)
+- **P1 pocket** — γ-lactam 고리, Glu166/His163과 H-bond
+- **P2 pocket** — 소수성 포켓, His41/Met49/Met165
+
+이 잔기 번호(41, 49, 145, 163, 165, 166)는 **Mpro의 알려진 결합 포켓 구조 자체**를 나타내므로 어떤 아미노산으로 변이가 오든(E166A든 E166V든) 별도 설정 없이 자동으로 추적됩니다. 다만 이 고정된 포켓 잔기 목록 밖에 있는 변이(예: 표면/루프의 H172Y)는 이 2D 하이라이트 시스템의 추적 대상이 아닙니다 — 접촉수·pLDDT 등 다른 실측 지표로 별도 확인해야 합니다.
+
+### 2. WT vs Mutant Diff 하이라이트
+`structure_analysis.py`가 CIF 파일에서 잔기별 접촉수·H-bond를 직접 파싱하고(외부 구조 라이브러리 없이 순수 Python), `molecule_highlight.py`가 WT/Mutant 양쪽의 같은 잔기를 `TIER_RANK`(hbond > contact > weak > poor) 기준으로 비교해 등급이 떨어진 영역만 빨강(소실)/주황(약화)/파랑(개선)으로 2D SVG에 칠합니다. 변이체마다 잔기명이 자동으로 바뀌어 표시됩니다(`get_residue_name`/`format_residue_label`) — 예: E166A 변이체에서는 "Ala166"으로 정확히 표기됩니다.
+
+### 3. Stage 3 → Stage 4: 실측 데이터 이어받기
+`MoleculeHighlightPage`에서 계산된 diff 결과(어느 영역이 소실/약화됐는지, 어떤 SMILES 토큰이 그 영역에 해당하는지)를 `sessionStorage`에 저장해 `OptimizationPage`로 그대로 전달합니다. 사용자가 SMILES를 수정하면 `checkRegionPresence`(narrow SMARTS 패턴)로 "실제로 그 손실 부위를 구조적으로 고쳤는지"를 실시간 체크합니다.
+
+### 4. Stage 4의 세 가지 실측 재검증
+1. **RDKit 물성 재계산** — MW/TPSA/cLogP, Lipinski 기반 ADMET 플래그, parent 대비 Δ
+2. **QuickVina2 재도킹** (`docking_service.py`) — parent와 candidate를 AF3가 예측한 실제 mutant 포켓 좌표에 동일 조건으로 재도킹, 결합에너지(kcal/mol) 비교
+3. **AF3 GPU 재추론** — candidate SMILES로 mutant 서열에 대해 **AlphaFold3 전체 추론을 다시 실행**(WSL 엔진의 `customInhibitors` 파라미터로 카탈로그에 없는 임의 SMILES 주입), 결과 구조에 `structure_analysis.py`를 다시 돌려 parent의 원본 mutant 결합과 실측 비교 → `structuralInteractionRecovery`(`improved`/`similar`/`worsened`)를 실제 값으로 산출. GPU 추론이라 분 단위 이상 걸려 202로 즉시 응답 후 프론트가 폴링합니다.
+
+Stage 5(최종 순위표)는 이 세 실측값(특히 `structuralInteractionRecovery`, `bindingAffinityDelta`)을 그대로 읽어 "Top Structural / Top Nasal Feasibility / Balanced / High Risk" 카테고리로 자동 분류합니다 — 별도 재계산 로직 없이 Stage 4 결과가 그대로 반영됩니다.
+
+### 5. Job 저장소
+`server/index.js`의 `jobStore`는 **인메모리 `Map`**입니다. 서버 재시작 시 도킹/AF3 재검증 결과가 초기화되며(WT/Mutant 구조 파일 목록은 `/api/sync-wsl-jobs`로 WSL 출력 폴더에서 재동기화 가능), 별도 DB/파일 영속화는 없습니다 — 포트폴리오 목적의 의도적 단순화입니다.
+
+---
+
+## 📂 디렉토리 구조
 
 ```text
-c:\dev\healthcare\af3\
-├── server/                     # 백엔드 Proxy 서버 (Node.js/Express, Port 8000)
-│   ├── index.js                # AF3 엔진 중계 라우터 및 로컬 시뮬레이션 루틴
-│   ├── package.json            # Proxy 서버 의존성
-│   └── .env.example            # Proxy 서버 환경변수 템플릿
-├── src/                        # 프론트엔드 소스 코드 (React + Vite + TS)
-│   ├── api/                    # Axios 커스텀 클라이언트 및 6개 REST API 통신 레이어
-│   │   ├── client.ts
-│   │   └── analysisApi.ts
-│   ├── services/               # 로컬 Ubuntu AF3 연결을 위한 7개 핵심 인터페이스
-│   │   └── af3Service.ts       # prepareInputSequence, submitAf3Job, checkUbuntuServerHealth 등
-│   ├── components/             # 모듈화된 UI 컴포넌트
-│   │   ├── common/             # ResearchBadge, EmptyState, LoadingState, ErrorState, StatusPill
-│   │   ├── layout/             # Topbar, Sidebar, AppLayout (Dark Navy Glassmorphism)
-│   │   ├── inhibitor/          # InhibitorCard (더미 메트릭 배제)
-│   │   └── structure/          # StructureViewerPlaceholder, ResiduePanel (H41, C145 매핑)
-│   ├── pages/                  # 7개 주요 워크플로우 페이지
-│   │   ├── DashboardPage.tsx
-│   │   ├── SequenceInputPage.tsx
-│   │   ├── MutationAnalysisPage.tsx
-│   │   ├── BindingPredictionPage.tsx
-│   │   ├── InhibitorComparisonPage.tsx
-│   │   ├── StructureViewerPage.tsx
-│   │   └── ResearchReportPage.tsx
-│   ├── types/                  # AnalysisStatus, MutationInput, Inhibitor 등 8대 핵심 타입
-│   └── utils/                  # Wuhan-Hu-1 Reference 정보, 9개 핵심 잔기 상수 및 서열 검증 유틸
-├── .env.example                # 프론트엔드 환경변수 템플릿
-├── package.json                # 통합 빌드 및 서버 실행 스크립트
-└── vite.config.ts              # Vite 및 Tailwind v4 플러그인 설정
+af3/
+├── server/
+│   ├── index.js                # Express Proxy — WSL AF3 엔진 중계 + Python 스크립트 spawn + Job 상태 관리
+│   ├── structure_analysis.py   # CIF 파싱 → 접촉/H-bond/pLDDT/매몰면적 계산 (외부 구조 라이브러리 불필요)
+│   ├── molecule_highlight.py   # RDKit 2D SVG 생성 + WT-vs-Mutant diff 하이라이트 + SMARTS 존재 체크
+│   ├── derivative_analysis.py  # 후보 SMILES 물성(MW/TPSA/cLogP) + ADMET 플래그 계산
+│   ├── docking_service.py      # QuickVina2 래퍼 (meeko로 리간드/리셉터 PDBQT 준비)
+│   ├── screening_service.py    # RDKit 규칙 기반 1차 스크리닝
+│   └── optimization_service.py # RDKit 기반 구조 변경 후보 자동 제안 (보조 엔드포인트)
+├── af3_engine_server_new.py    # WSL 배포용 AF3 엔진 스테이징 사본 — 수정 후 /home/af3/af3/af3_engine_server.py로 수동 복사 필요
+├── src/
+│   ├── api/analysisApi.ts      # 전체 REST API 클라이언트 (Stage 0~5 전 구간)
+│   ├── pages/                  # 13개 워크플로우 페이지 (Dashboard ~ FinalRanking)
+│   ├── components/
+│   │   ├── common/             # EmptyState/LoadingState/ErrorState, RiskBadge, MetricCard 등
+│   │   ├── layout/              # AppLayout, Sidebar(단계 번호/뱃지), Topbar
+│   │   ├── inhibitor/           # InhibitorCard
+│   │   └── structure/           # StructureViewerPlaceholder, ResiduePanel
+│   ├── types/                  # analysis/inhibitor/optimization/screening/interaction 타입 정의
+│   └── routes/AppRoutes.tsx    # 라우트 정의
+├── package.json                 # 프론트엔드 (vite dev :5174 근처 포트, 실제 포트는 자동 할당)
+└── vite.config.ts
 ```
 
 ---
 
-## 💻 현재 환경(Windows 노트북)에서 테스트 및 실행 가이드
+## ⚙️ 실행 방법 (Windows + WSL2)
 
-현재 노트북에서는 실제 Linux AlphaFold3 엔진이 구동되지 않으므로, Proxy 서버(`server/index.js`)가 실제 엔진 연결 실패를 감지하면 가공된 더미 약효 수치를 만들지 않고 오직 **기하학적 치환 및 상태 폴링 워크플로우를 시뮬레이션**하도록 구성되어 있습니다.
+### 사전 조건
+- Windows: Node.js, Miniconda (`af3-rdkit` 환경에 RDKit, meeko, gemmi 설치)
+- WSL2 Ubuntu: AlphaFold3 GPU 환경 (`/home/af3/af3/`), NVIDIA GPU 드라이버
 
-### 1단계. 전체 의존성 설치
-터미널에서 프론트엔드와 백엔드 Proxy 서버의 의존성을 모두 설치합니다:
+### 1. 프론트엔드
 ```bash
-# 1. 루트 프론트엔드 패키지 설치
 npm install
-
-# 2. 백엔드 Proxy 서버 패키지 설치
-npm run install:server
+npm run dev        # Vite dev server (기본 5173, 점유 시 자동으로 다음 포트)
 ```
 
-### 2단계. 백엔드 Proxy 서버 실행 (Port 8000)
-터미널 창을 하나 열고 아래 명령어로 Proxy 서버를 실행합니다:
+### 2. 백엔드 Proxy 서버
 ```bash
-npm run server
+cd server && npm install   # 최초 1회
+node server/index.js       # http://localhost:8000
 ```
-*정상 실행 메시지 예시:*
+
+### 3. WSL AlphaFold3 엔진
+WSL 안에서 `af3_engine_server.py`가 이미 떠 있어야 합니다(`http://localhost:8080`). 로컬에서 엔진 코드를 수정했다면:
+```bash
+# Windows → WSL로 배포
+cp af3_engine_server_new.py //wsl.localhost/Ubuntu/home/af3/af3/af3_engine_server.py
+
+# WSL 안에서 재시작
+wsl -d Ubuntu -- bash -c "pkill -f af3_engine_server.py; nohup python3 /home/af3/af3/af3_engine_server.py > /home/af3/af3/engine.log 2>&1 &"
+```
+
+### 4. 확인
 ```text
-========================================================
 🚀 [AF3 Proxy Server] Running on http://localhost:8000
 🔗 [Target Ubuntu Engine] Configured to: http://localhost:8080
-🛡️  [Mode] Research Use Only (No Dummy Biological Metrics)
-========================================================
 ```
-
-### 3단계. 프론트엔드 개발 서버 실행 (Port 5173)
-새로운 터미널 창을 열고 Vite 프론트엔드 서버를 실행합니다:
-```bash
-npm run dev
-```
-브라우저에서 `http://localhost:5173`으로 접속하면 Dark Navy 테마의 웹 애플리케이션을 즉시 테스트할 수 있습니다.
+브라우저에서 Vite가 띄운 주소로 접속하면 됩니다.
 
 ---
 
-## 🐧 깃(Git)으로 Ubuntu 데스크탑 이전 및 연동 가이드
+## 📡 주요 API 요약
 
-현재 ноутбу에서 작성된 소스 코드는 OS 독립적이며 환경변수로 통신 주소가 분리되어 있으므로, 깃(Git)으로 Push 후 실제 AlphaFold3가 구동되는 Ubuntu 데스크탑에서 Pull 받아 즉시 사용할 수 있습니다.
-
-### 1. Git Push (노트북에서 수행)
-```bash
-git add .
-git commit -m "feat: complete Mpro-Variant Binder frontend and proxy scaffolding"
-git push origin main
-```
-
-### 2. Git Pull 및 환경변수 설정 (Ubuntu 데스크탑에서 수행)
-Ubuntu 데스크탑에서 프로젝트를 Clone 또는 Pull 받은 후, `.env` 파일을 생성하여 실제 AF3 엔진 주소를 연결합니다.
-
-#### ① 프론트엔드 환경변수 설정 (`.env`)
-루트 디렉토리의 `.env.example`을 복사하여 `.env` 파일을 만듭니다:
-```bash
-cp .env.example .env
-```
-`.env` 파일 내용 확인:
-```env
-VITE_API_BASE_URL=http://localhost:8000
-VITE_AF3_SERVER_URL=http://localhost:8000
-```
-
-#### ② 백엔드 Proxy 서버 환경변수 설정 (`server/.env`)
-`server/` 디렉토리 내의 `.env.example`을 복사하여 `server/.env` 파일을 만듭니다:
-```bash
-cp server/.env.example server/.env
-```
-**[중요]** 실제 Ubuntu 데스크탑 내에서 돌고 있는 AlphaFold3 도커 컨테이너 또는 API 파이프라인 엔진의 포트(예: `8080` 또는 `5000`)에 맞추어 `AF3_ENGINE_URL`을 수정합니다:
-```env
-PORT=8000
-# 실제 Ubuntu 로컬 AF3 엔진 파이프라인 주소로 변경
-AF3_ENGINE_URL=http://localhost:8080
-```
-
-### 3. 서버 구동 및 서비스 연동
-Ubuntu 데스크탑 터미널에서 서버와 프로덕션 빌드를 실행합니다:
-```bash
-# 의존성 설치
-npm install && npm run install:server
-
-# 프론트엔드 프로덕션 번들 빌드 (검증)
-npm run build
-
-# Proxy 서버 실행 (실제 AF3 엔진과 실시간 통신 시작)
-npm run server
-```
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| `POST` | `/api/analysis` | 신규 분석 Job 생성 (`AF3-MPRO-{변이라벨}-{타임스탬프}` 형식) |
+| `POST` | `/api/analysis/:jobId/predict` | 선택 억제제들에 대해 AF3 GPU 추론 시작 (WSL로 중계) |
+| `POST` | `/api/structure/analyze` | CIF → 접촉/H-bond/pLDDT 실측 분석 |
+| `POST` | `/api/molecule/highlight` | 2D SVG 생성 — `mode: plain / diff / check_regions` 또는 기본(절대 품질) |
+| `POST` | `/api/derivative/analyze` | 후보 SMILES RDKit 물성 계산 |
+| `POST` | `/api/analysis/:jobId/optimize` | 유도체 후보 저장 (Stage 3 → Stage 4) |
+| `POST` | `/api/analysis/:jobId/reevaluate` | parent 대비 물성 재평가 |
+| `POST` | `/api/analysis/:jobId/reevaluate/dock` | QuickVina2 재도킹 |
+| `POST`/`GET` | `/api/analysis/:jobId/reevaluate/af3` | AF3 GPU 재추론 시작/상태 폴링 |
+| `POST` | `/api/sync-wsl-jobs` | WSL 출력 폴더에서 Job 메타데이터 재동기화 (서버 재시작 후 복구용) |
 
 ---
 
-## 🔬 주요 화면 워크플로우 요약
+## ⚠️ 알려진 한계
 
-1. **대시보드 (`/`)**: 플랫폼 설명, 5개 억제제 메타 요약, 최근 분석 내역 (`EmptyState` 기반 기본 빈 상태)
-2. **시퀀스 입력 (`/sequence`)**: Wuhan-Hu-1 Wild-Type 선택, 변이 표기(`L50F/E166A` 등) / FASTA 서열 입력 탭, 서열 유효성 검사 후 `createAnalysisJob` 호출
-3. **변이 분석 (`/mutation?jobId=...`)**: 기준 서열 대비 치환 잔기 테이블 출력, H41/C145 등 활성 부위 잔기 하이라이트
-4. **결합 예측 설정 (`/prediction?jobId=...`)**: 5개 억제제 체크박스 선택, Mpro Dimer Mode 고정 확인, 시드 설정 및 실시간 폴링(`getPredictionStatus`) 애니메이션 뷰
-5. **억제제 비교 (`/comparison?jobId=...`)**: Cys145 근접도, H-bond, RMSD 등 기하학적 매개변수 차트 및 테이블 비교 (임의 IC50 없음)
-6. **3D 구조 뷰어 (`/viewer?jobId=...`)**: 상단 6대 시각화 토글 툴바(Protein, Ligand, Active Site 등), 우측 잔기 패널, 하단 5대 리가нд 전환 탭 (Mol* 마운트 대기 영역)
-7. **연구 보고서 (`/report?jobId=...`)**: 3대 내보내기 버튼(PDF/CSV/ChimeraX, 준비중 표시) 및 하단 Research Use Only 경고문 알림창
+- **Job 인메모리 저장** — 서버 재시작 시 도킹/AF3 재검증 결과 소실 (구조 파일 목록만 재동기화 가능)
+- **파마코포어 하이라이트 범위** — warhead/P1/P2 핵심 잔기(41,49,145,163,165,166) 밖의 변이는 2D 하이라이트에 반영되지 않음
+- **억제제 카탈로그가 Nirmatrelvir 계열로 한정됨** — 2D 취약부 진단이 `nitrile/aldehyde/ketoamide warhead + 5원 γ-lactam P1` SMARTS에 의존해, 이 패턴을 벗어나는 억제제는 warhead/P1 미인식 또는 오탐이 발생한다. 그래서 카탈로그를 해당 계열 5종(+플랫폼 설계 유도체 A-2)으로 축소했다. 비공유결합 계열(ensitrelvir, x77, ml188 …)이나 bisulfite/hydroxymethyl-ketone warhead 계열(gc376, pf00835231, boceprevir …)을 다시 지원하려면 `server/molecule_highlight.py`의 `PHARMACOPHORE` 패턴 확장이 선행되어야 한다.
+- **6원 lactam P1 미인식** — A-2 유도체처럼 P1 고리를 6원환으로 확장한 구조는 `p1_gamma_lactam`(5원환) 패턴에 걸리지 않아, 정작 설계 의도인 확장 고리를 P1로 인식하지 못한다(generic 패턴으로만 매칭)
+- **`structuralInteractionRecovery` 판정 기준** — H-bond 개수 변화를 1차 신호로 삼는 단순 휴리스틱 (RMSD, 포즈 유사도 등은 미포함)
+- **인증/권한 없음** — 배포 대상이 아닌 포트폴리오 프로젝트로 의도적으로 생략
 
 ---
-*Developed by Antigravity under Strict Academic & Structural Integrity Best Practices.*
+*Developed under Strict Academic & Structural Integrity Best Practices — Research Use Only.*
