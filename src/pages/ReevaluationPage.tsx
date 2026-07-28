@@ -26,7 +26,7 @@ const RECOVERY_COLOR: Record<string, string> = {
 interface DerivativeAnalysisResult {
   success: boolean;
   properties: { mw: number; clogp: number; tpsa: number };
-  admet: { status: string; flags: string[] };
+  admet: { status: string; flags: string[]; advisories?: string[] };
   svg?: string;
   error?: string;
 }
@@ -436,14 +436,20 @@ function PropertyGrid({ mw, tpsa, clogp, mwDelta, tpsaDelta, clogpDelta }: {
   );
 }
 
-function AdmetRow({ admet }: { admet: { status: string; flags: string[] } }) {
+function AdmetRow({ admet }: { admet: { status: string; flags: string[]; advisories?: string[] } }) {
   return (
-    <div className="flex items-center gap-3 mt-4 flex-wrap">
-      <div className={`px-2 py-1 rounded text-xs font-bold ${admet.status === 'Good' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
-        ADMET: {admet.status}
+    <div className="mt-4 space-y-1.5">
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className={`px-2 py-1 rounded text-xs font-bold ${admet.status === 'Good' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+          ADMET: {admet.status}
+        </div>
+        {admet.flags.length > 0 && (
+          <div className="text-xs text-amber-300">Flags: {admet.flags.join(', ')}</div>
+        )}
       </div>
-      {admet.flags.length > 0 && (
-        <div className="text-xs text-amber-300">Flags: {admet.flags.join(', ')}</div>
+      {/* 위험이 아닌 참고 지표 — 순위 판정에는 반영하지 않는다 */}
+      {admet.advisories && admet.advisories.length > 0 && (
+        <div className="text-[11px] text-gray-500">참고: {admet.advisories.join(', ')}</div>
       )}
     </div>
   );

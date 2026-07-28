@@ -92,11 +92,13 @@ function categorize(candidate: ExtendedFinalCandidateRecord, nasal: NasalAssessm
   const structuralRecovered = candidate.improvement?.structuralInteractionRecovery === 'improved';
   if (structuralRecovered) return 'top_structural_candidate';
 
-  const mw = candidate.mw ?? 0;
   const clogp = candidate.clogp ?? 0;
   const structuralAlerts = candidate.structuralAlertCount ?? 0;
 
-  const highRisk = mw > 600 || clogp > 5 || structuralAlerts > 0 || candidate.improvement?.toxicityNasalProfile === 'worsened';
+  // 분자량은 비강 적합성 축(≤500 / 500–600 / >600)과 하드필터(>700)에서 이미 평가한다.
+  // 여기서 또 위험 신호로 쓰면 Lipinski 초과만으로 High Risk가 되어, MW 500을 넘는
+  // 승인 프로테아제 억제제(Leritrelvir 639, Boceprevir 522 등)까지 위험으로 분류된다.
+  const highRisk = clogp > 5 || structuralAlerts > 0 || candidate.improvement?.toxicityNasalProfile === 'worsened';
   if (highRisk) return 'high_risk_candidate';
 
   // 비강 적합성 판정은 src/utils/nasal.ts로 일원화 (1단계 스크리닝과 동일 기준)

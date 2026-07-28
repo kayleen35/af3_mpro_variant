@@ -5,8 +5,20 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem import Draw
+from rdkit.Chem import FilterCatalog
 from rdkit.Chem.Draw import rdMolDraw2D
 import base64
+
+# PAINS / BRENK 구조 경고 카탈로그 (screening_service.py와 동일 구성)
+try:
+    _alert_params = FilterCatalog.FilterCatalogParams()
+    _alert_params.AddCatalog(FilterCatalog.FilterCatalogParams.FilterCatalogs.PAINS_A)
+    _alert_params.AddCatalog(FilterCatalog.FilterCatalogParams.FilterCatalogs.PAINS_B)
+    _alert_params.AddCatalog(FilterCatalog.FilterCatalogParams.FilterCatalogs.PAINS_C)
+    _alert_params.AddCatalog(FilterCatalog.FilterCatalogParams.FilterCatalogs.BRENK)
+    _ALERT_CATALOG = FilterCatalog.FilterCatalog(_alert_params)
+except Exception:
+    _ALERT_CATALOG = None
 
 def analyze_derivative(smiles):
     mol = Chem.MolFromSmiles(smiles)
@@ -72,11 +84,31 @@ def analyze_derivative(smiles):
     for match in p1_ext_matches:
         p1_atoms.update(match)
 
-    # Lipinski's Rule of 5 (간단한 ADMET Flag 판단)
+    # 실제 구조 경고 (PAINS / BRENK) — RDKit FilterCatalog
+    # "구조 경고"는 반응성·독성 유발 부분구조를 뜻하므로 물성 수치와 섞지 않는다.
+    structural_alerts = []
+    if _ALERT_CATALOG is not None:
+        try:
+            for entry in _ALERT_CATALOG.GetMatches(mol):
+                desc = entry.GetDescription()
+                if desc not in structural_alerts:
+                    structural_alerts.append(desc)
+        except Exception:
+            pass
+
+    # Lipinski Rule of 5는 '경구 흡수' 경험칙이다. Mpro 억제제 같은 펩티도미메틱은
+    # MW 500을 넘는 승인 약물이 흔하므로(예: Leritrelvir 639, Boceprevir 522)
+    # MW 초과는 위험 신호가 아니라 참고(advisory) 지표로만 표기한다.
+    advisories = []
+    if mw > 500:
+        advisories.append("MW > 500 (Lipinski 참고 — 펩티도미메틱 계열은 통상 초과)")
+
+    # 실제 ADMET 우려로 취급하는 항목만 flag로 남긴다.
     admet_flags = []
-    if mw > 500: admet_flags.append("MW > 500")
-    if clogp > 5: admet_flags.append("cLogP > 5")
-    
+    if clogp > 5:
+        admet_flags.append("cLogP > 5")
+    admet_flags.extend(structural_alerts)
+
     admet_status = "Good" if len(admet_flags) == 0 else "Warning"
 
     # SVG 생성
@@ -116,8 +148,12 @@ def analyze_derivative(smiles):
         },
         "admet": {
             "status": admet_status,
-            "flags": admet_flags
+            "flags": admet_flags,
+            # 위험이 아닌 참고 지표 (Lipinski 등) — 순위 판정에는 반영하지 않는다
+            "advisories": advisories
         },
+        # PAINS/BRENK 기반 실제 구조 경고 (물성 플래그와 분리)
+        "structuralAlerts": structural_alerts,
         "highlights": {
             "warhead": list(warhead_atoms),
             "p1": list(p1_atoms)

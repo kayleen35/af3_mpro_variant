@@ -952,7 +952,9 @@ app.post('/api/analysis/:jobId/optimize', async (req, res) => {
     modificationType: modificationType || 'r_group_replacement',
     rationale: rationale && rationale.length ? rationale : ['사용자 정의 SMILES 수정'],
     expectedRecoveredInteraction: [],
-    structuralAlerts: candidateAnalysis.admet?.flags || [],
+    // 구조 경고는 PAINS/BRENK 부분구조 매칭 결과만 담는다.
+    // (MW·cLogP 같은 물성 플래그를 여기 섞으면 Lipinski 초과만으로 High Risk가 된다)
+    structuralAlerts: candidateAnalysis.structuralAlerts || [],
     createdAt: new Date().toISOString(),
   };
 
