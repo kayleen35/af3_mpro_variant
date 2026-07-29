@@ -9,6 +9,7 @@ import json
 import os
 import glob
 import subprocess
+import math
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, unquote
 
@@ -33,29 +34,122 @@ WT_SEQUENCE = (
     'VTFQ'
 )
 
-# 16종 억제제 SMILES 매핑 (CCD 코드 완전 대체)
+# 억제제 SMILES 매핑 (CCD 코드 완전 대체)
+# 플랫폼 2D 취약부 진단이 인식 가능한 계열(nitrile/aldehyde/ketoamide warhead +
+# 5원 γ-lactam P1)만 유지 — 상세 배경은 src/types/inhibitor.ts 주석 참고
 INHIBITOR_SMILES = {
     # 공유결합 (Covalent)
     'nirmatrelvir':     'CC1([C@@H]2[C@H]1[C@H](N(C2)C(=O)[C@H](C(C)(C)C)NC(=O)C(F)(F)F)C(=O)N[C@@H](C[C@@H]3CCNC3=O)C#N)C',
     'ibuzatrelvir':     'CC(C)(C)[C@@H](C(=O)N1C[C@@H](C[C@H]1C(=O)N[C@@H](C[C@@H]2CCNC2=O)C#N)C(F)(F)F)NC(=O)OC',
     'simnotrelvir':     'CC(C)(C)[C@@H](C(=O)N1CC2(C[C@H]1C(=O)N[C@@H](C[C@@H]3CCNC3=O)C#N)SCCS2)NC(=O)C(F)(F)F',
     'leritrelvir':      'C1CCC(CC1)[C@@H](C(=O)N2C[C@@H]3CCC[C@@H]3[C@H]2C(=O)N[C@@H](C[C@@H]4CCNC4=O)C(=O)C(=O)NC5CCCC5)NC(=O)C(F)(F)F',
-    'pomotrelvir':      'C1C[C@H](C(=O)NC1)C[C@@H](C#N)NC(=O)[C@H](CC2CC2)NC(=O)C3=CC4=C(N3)C(=CC=C4)Cl',
-    'gc376':            'CC(C)C[C@@H](C(=O)N[C@@H](C[C@@H]1CCNC1=O)[C@@H](O)S(=O)(=O)O)NC(=O)OCc2ccccc2',
-    'pf00835231':       'CC(C)C[C@@H](C(=O)N[C@@H](C[C@@H]1CCNC1=O)C(=O)CO)NC(=O)C2=CC3=C(N2)C=CC=C3OC',
-    'boceprevir':       'CC1([C@@H]2[C@H]1[C@H](N(C2)C(=O)[C@H](C(C)(C)C)NC(=O)NC(C)(C)C)C(=O)N[C@@H](CC3CCC3)[C@H](C(=O)N)O)C',
     'bofutrelvir':      'C1CCC(CC1)C[C@@H](C(=O)N[C@@H](C[C@@H]2CCNC2=O)C=O)NC(=O)C3=CC4=CC=CC=C4N3',
-    # 비공유결합 (Non-covalent)
-    'ensitrelvir':      'CN1C=C2C=C(C(=CC2=N1)Cl)NC3=NC(=O)N(C(=O)N3CC4=CC(=C(C=C4F)F)F)CC5=NN(C=N5)C',
-    'x77':              'CC(C)(C)C1=CC=C(C=C1)N([C@H](C2=CN=CC=C2)C(=O)NC3CCCCC3)C(=O)C4=CN=CN4',
-    'ml188':            'CC(C)(C)C1=CC=C(C=C1)N([C@H](C2=CN=CC=C2)C(=O)NC(C)(C)C)C(=O)C3=CC=CO3',
-    'mat_pos_e194df51': 'C1CC1(CS(=O)(=O)N2C[C@H](C3=C(C2)C=CC(=C3)Cl)C(=O)NC4=CN=CC5=CC=CC=C54)C#N',
-    'mat_pos_b3e365b9': 'C1COC2=C([C@@H]1C(=O)NC3=CN=CC4=CC=CC=C43)C=C(C=C2)Cl',
-    'secutrelvir':      'C1C2(CC1(F)F)CN(C2)C3=C(C(=O)N(C(=O)N3CC#N)C4=CC(=CN=C4)Cl)C5=CC(=C(C=C5)F)Cl',
-    'olgotrelvir':      'CC(C)C[C@@H](C(=O)N[C@@H](C[C@@H]1CCNC1=O)CO)NC(=O)c2cc3ccccc3[nH]2',
+    # 플랫폼 자체 설계 유도체 (실제 발표 화합물 아님, src/types/inhibitor.ts와 동일 SMILES 유지)
+    # P1 γ-lactam 5원환 → 6원환(valerolactam) 확장으로 E166V S1 포켓 Gap 보상 시도
+    'a2_derivative':    'CC1([C@@H]2[C@H]1[C@H](N(C2)C(=O)[C@H](C(C)(C)C)NC(=O)C(F)(F)F)C(=O)N[C@@H](C[C@@H]3CCCCNC3=O)C#N)C',
 }
 
 active_jobs = {}
+
+def calculate_interactions_from_cif(cif_path):
+    try:
+        atoms = []
+        with open(cif_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            
+        in_atom_site = False
+        headers = []
+        for line in lines:
+            if line.startswith('_atom_site.'):
+                in_atom_site = True
+                headers.append(line.strip().split('.')[1])
+            elif in_atom_site and (line.startswith('ATOM') or line.startswith('HETATM')):
+                parts = line.split()
+                try:
+                    idx_type = headers.index('type_symbol')
+                    idx_comp = headers.index('label_comp_id')
+                    idx_asym = headers.index('label_asym_id')
+                    idx_seq = headers.index('label_seq_id')
+                    idx_x = headers.index('Cartn_x')
+                    idx_y = headers.index('Cartn_y')
+                    idx_z = headers.index('Cartn_z')
+                    idx_atom = headers.index('label_atom_id')
+                except ValueError:
+                    idx_type, idx_atom, idx_comp, idx_asym, idx_seq = 2, 3, 5, 6, 8
+                    idx_x, idx_y, idx_z = 10, 11, 12
+                    
+                atom = {
+                    'type': parts[idx_type],
+                    'atom_name': parts[idx_atom],
+                    'res_name': parts[idx_comp],
+                    'chain': parts[idx_asym],
+                    'res_seq': parts[idx_seq],
+                    'x': float(parts[idx_x]),
+                    'y': float(parts[idx_y]),
+                    'z': float(parts[idx_z])
+                }
+                atoms.append(atom)
+                
+        protein_atoms = [a for a in atoms if a['chain'] in ['A', 'B']]
+        ligand_atoms = [a for a in atoms if a['chain'] == 'C']
+        
+        if not ligand_atoms:
+            return None
+            
+        cys145_sg = [a for a in protein_atoms if a['chain'] == 'A' and str(a['res_seq']) == '145' and a['res_name'] == 'CYS' and a['atom_name'] == 'SG']
+        
+        cys_dist = 999.0
+        if cys145_sg:
+            sg = cys145_sg[0]
+            for la in ligand_atoms:
+                if la['type'] != 'H':
+                    dist = math.sqrt((sg['x'] - la['x'])**2 + (sg['y'] - la['y'])**2 + (sg['z'] - la['z'])**2)
+                    if dist < cys_dist:
+                        cys_dist = dist
+                        
+        h_bond_count = 0
+        prot_donors = [a for a in protein_atoms if a['type'] in ['N', 'O', 'S']]
+        lig_donors = [a for a in ligand_atoms if a['type'] in ['N', 'O', 'S']]
+        for pa in prot_donors:
+            for la in lig_donors:
+                dist = math.sqrt((pa['x'] - la['x'])**2 + (pa['y'] - la['y'])**2 + (pa['z'] - la['z'])**2)
+                if dist < 3.5:
+                    h_bond_count += 1
+                    
+        has_clash = False
+        clash_count = 0
+        prot_heavy = [a for a in protein_atoms if a['type'] != 'H']
+        lig_heavy = [a for a in ligand_atoms if a['type'] != 'H']
+        for pa in prot_heavy:
+            for la in lig_heavy:
+                dist = math.sqrt((pa['x'] - la['x'])**2 + (pa['y'] - la['y'])**2 + (pa['z'] - la['z'])**2)
+                if dist < 2.0:
+                    clash_count += 1
+                    if clash_count > 2:
+                        has_clash = True
+                        break
+            if has_clash:
+                break
+                
+        a166_f167 = [a for a in protein_atoms if a['chain'] == 'A' and str(a['res_seq']) in ['166', '167'] and a['type'] != 'H']
+        a166_dist = 999.0
+        for pa in a166_f167:
+            for la in lig_heavy:
+                dist = math.sqrt((pa['x'] - la['x'])**2 + (pa['y'] - la['y'])**2 + (pa['z'] - la['z'])**2)
+                if dist < a166_dist:
+                    a166_dist = dist
+        
+        a166_interaction = 'Yes' if a166_dist < 4.0 else 'No'
+        
+        return {
+            'cys145Distance': round(cys_dist, 2),
+            'hBondCount': h_bond_count,
+            'stericClash': 'Yes' if has_clash else 'No',
+            'a166f167Interaction': a166_interaction
+        }
+    except Exception as e:
+        print("Error parsing CIF:", e)
+        return None
 
 
 def check_gpu():
@@ -146,7 +240,7 @@ class AF3EngineHandler(BaseHTTPRequestHandler):
                 'dbDir': DB_DIR,
                 'dbExists': os.path.isdir(DB_DIR),
                 'supportedInhibitors': list(INHIBITOR_SMILES.keys()),
-                'message': 'Ubuntu Local AlphaFold3 Engine — 16 SMILES-based inhibitors',
+                'message': f'Ubuntu Local AlphaFold3 Engine — {len(INHIBITOR_SMILES)} SMILES-based inhibitors',
             })
             return
 
@@ -169,13 +263,41 @@ class AF3EngineHandler(BaseHTTPRequestHandler):
                             try:
                                 with open(summary_files[0], 'r', encoding='utf-8') as sf:
                                     metrics = json.load(sf)
-                            except Exception:
-                                pass
+                                
+                                # Process CIF for structural interactions and cache it.
+                                # 캐시 파일 읽기/쓰기 실패(예: root 소유 output 폴더에 대한
+                                # PermissionError)가 방금 계산에 성공한 struct_metrics까지
+                                # 버리지 않도록 I/O는 별도 try/except로 감싼다.
+                                struct_metrics_file = os.path.join(full_path, 'structural_metrics_cache.json')
+                                struct_metrics = None
+                                if os.path.exists(struct_metrics_file):
+                                    try:
+                                        with open(struct_metrics_file, 'r', encoding='utf-8') as smf:
+                                            struct_metrics = json.load(smf)
+                                    except Exception as e:
+                                        print(f"Structural metrics cache read error (non-fatal): {e}")
+                                elif cif_files:
+                                    struct_metrics = calculate_interactions_from_cif(cif_files[0])
+                                    if struct_metrics:
+                                        try:
+                                            with open(struct_metrics_file, 'w', encoding='utf-8') as smf:
+                                                json.dump(struct_metrics, smf)
+                                        except Exception as e:
+                                            print(f"Structural metrics cache write error (non-fatal): {e}")
+
+                                if struct_metrics:
+                                    metrics.update(struct_metrics)
+
+                            except Exception as e:
+                                print(f"Metrics processing error: {e}")
                         jobs.append({
                             'jobId': job_dir,
                             'completed': len(cif_files) > 0,
                             'cifFile': os.path.basename(cif_files[0]) if cif_files else None,
                             'metrics': metrics,
+                            'createdAt': __import__('datetime').datetime.utcfromtimestamp(
+                                os.path.getmtime(full_path)
+                            ).strftime('%Y-%m-%dT%H:%M:%SZ'),
                         })
             self.send_json(200, {'jobs': jobs})
             return
@@ -215,6 +337,9 @@ class AF3EngineHandler(BaseHTTPRequestHandler):
 
             job_id = post_data.get('jobId', 'AF3-JOB-NEW')
             inhibitor_ids = post_data.get('inhibitorIds', ['nirmatrelvir'])
+            # Stage 3 유도체 후보처럼 16종 카탈로그에 없는 임의 SMILES를 재결합 검증할 때 사용
+            # ({inhibitorId: smiles} 형태 — 카탈로그에 없는 id에 한해 여기서 조회)
+            custom_inhibitors = post_data.get('customInhibitors', {})
             run_gpu = post_data.get('fullInference', False)
 
             sequence = get_sequence(post_data)
@@ -228,7 +353,7 @@ class AF3EngineHandler(BaseHTTPRequestHandler):
             input_files = []
             skipped = []
             for inh_id in inhibitor_ids:
-                smiles = INHIBITOR_SMILES.get(inh_id)
+                smiles = INHIBITOR_SMILES.get(inh_id) or custom_inhibitors.get(inh_id)
                 if not smiles:
                     print(f'[AF3 Engine] WARNING: Unknown inhibitor: {inh_id}, skipping')
                     skipped.append(inh_id)

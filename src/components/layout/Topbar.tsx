@@ -14,10 +14,10 @@ export const Topbar: React.FC = () => {
           </div>
           <div className="flex flex-col">
             <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-cyan-400 via-sky-300 to-violet-300 bg-clip-text text-transparent">
-              Mpro-Variant Binder
+              AF3-MutanX
             </span>
-            <span className="text-[14px] text-gray-400 font-mono -mt-1 tracking-wider uppercase">
-              SARS-CoV-2 Structural Platform
+            <span className="text-[15px] text-gray-400 font-mono -mt-1 tracking-wider uppercase">
+              SARS-CoV-2 Mpro Structural Platform
             </span>
           </div>
         </Link>

@@ -229,30 +229,6 @@ export const FinalRankingPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="card-base p-6 bg-[#0b1020] border-purple-500/30">
-          <Dna className="w-8 h-8 text-purple-400 mb-3" />
-          <h3 className="text-lg font-bold text-gray-100 mb-1">Top Structural</h3>
-          <p className="text-xs text-gray-400">
-            AF3 재검증으로 구조적 상호작용 회복이 실제로 확인된 후보군. 이 Job에서는 AF3 재검증 전이라 아직 후보 없음.
-          </p>
-        </div>
-        <div className="card-base p-6 bg-[#0b1020] border-emerald-500/30">
-          <Activity className="w-8 h-8 text-emerald-400 mb-3" />
-          <h3 className="text-lg font-bold text-gray-100 mb-1">Top Nasal Feasibility</h3>
-          <p className="text-xs text-gray-400">
-            TPSA 및 cLogP가 이상적이며 분자량이 낮아 비강 상피 점막 투과 확률이 가장 높은 후보군.
-          </p>
-        </div>
-        <div className="card-base p-6 bg-[#0b1020] border-cyan-500/30">
-          <Star className="w-8 h-8 text-cyan-400 mb-3" />
-          <h3 className="text-lg font-bold text-gray-100 mb-1">Balanced</h3>
-          <p className="text-xs text-gray-400">
-            구조 복원과 물리화학적 특성 모두 무난하게 유지되어 종합적인 성공 가능성이 높은 범용 후보군.
-          </p>
-        </div>
-      </div>
-
       <div className="card-base overflow-hidden bg-[#0b1020] border-[#243047]">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
@@ -297,7 +273,7 @@ export const FinalRankingPage: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <span>{item.bindingAffinity.toFixed(2)}</span>
                         {item.bindingAffinityDelta !== undefined && (
-                          <span className={`text-[14px] font-bold ${formatDelta(item.bindingAffinityDelta).className}`}>
+                          <span className={`text-[15px] font-bold ${formatDelta(item.bindingAffinityDelta).className}`}>
                             {formatDelta(item.bindingAffinityDelta).text}
                           </span>
                         )}
@@ -341,15 +317,15 @@ export const FinalRankingPage: React.FC = () => {
             <div key={`nasal-${item.id}`} className="card-base p-5 bg-[#0b1020] border-[#243047]">
               <div className="flex items-center justify-between mb-3 pb-3 border-b border-[#243047]">
                 <div>
-                  <div className="font-bold text-gray-200">{item.name}</div>
-                  <div className="text-[14px] text-gray-500">{item.type}</div>
+                  <div className="font-bold text-base text-gray-200">{item.name}</div>
+                  <div className="text-sm text-gray-500">{item.type}</div>
                 </div>
                 <NasalFeasibilityBadge feasibility={item.nasal.feasibility} />
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {item.nasal.criteria.map((c) => (
-                  <div key={c.key} className="flex items-center justify-between gap-3 text-xs">
+                  <div key={c.key} className="flex items-center justify-between gap-3 text-sm">
                     <span className="text-gray-400 shrink-0 w-36">{c.label}</span>
                     <span className="font-mono text-gray-200 shrink-0 w-24 text-right">{c.display}</span>
                     <span className="text-gray-600 shrink-0 w-20 text-right font-mono">{c.criterion}</span>
@@ -367,20 +343,20 @@ export const FinalRankingPage: React.FC = () => {
 
               {item.nasal.solubility && (
                 <div className="mt-3 pt-3 border-t border-[#243047]">
-                  <div className="text-[14px] text-gray-500 mb-1">
+                  <div className="text-sm text-gray-500 mb-1">
                     수용해도 (참고 — 판정 미반영)
                   </div>
                   <div className="flex items-baseline gap-2 flex-wrap">
-                    <span className="font-mono text-sm text-gray-200">
+                    <span className="font-mono text-base text-gray-200">
                       {item.nasal.solubility.mgPerMl.toFixed(3)} mg/mL
                     </span>
-                    <span className={`text-[14px] font-bold ${item.nasal.solubility.sufficient ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    <span className={`text-sm font-bold ${item.nasal.solubility.sufficient ? 'text-emerald-400' : 'text-amber-400'}`}>
                       {item.nasal.solubility.sufficient
                         ? '필요 농도 충족'
                         : `필요 농도의 1/${Math.round(item.nasal.solubility.shortfallFactor)} 수준`}
                     </span>
                   </div>
-                  <p className="text-[14px] text-gray-600 mt-1">
+                  <p className="text-sm text-gray-600 mt-1">
                     비강 1회 투여 부피 한계({NASAL_DOSE_ASSUMPTION.volumeUl} µL)에서{' '}
                     {NASAL_DOSE_ASSUMPTION.doseMg} mg 투여 시 {NASAL_DOSE_ASSUMPTION.requiredMgPerMl} mg/mL 필요.
                     {item.nasal.solubility.method} — 가용화제·염 형태 등 제형 검토 필요 여부를 가늠하는 참고값이며 실험 측정이 필요합니다.

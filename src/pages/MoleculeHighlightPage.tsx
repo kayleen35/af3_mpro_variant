@@ -171,7 +171,15 @@ function MolPanel({ data, diffOverride, diffPending, plainSvg }: {
           </p>
           <div className="space-y-2">
             {regionEntries.map((rq) => (
-              <div key={rq.key} className="flex items-center justify-between py-2 border-b border-[#1e2d40] last:border-0 gap-3">
+              <div
+                key={rq.key}
+                className={`py-2 border-b border-[#1e2d40] last:border-0 gap-1.5 ${
+                  // usingDiff의 값(예: "Glu166 (S1 anchor) → Ala166 (S1 anchor):")은 길이가
+                  // 길어 한 행에 라벨과 나란히 두면(shrink-0) 폰트가 커질 때 라벨이 0px로
+                  // 밀려난다 — 이 경우만 라벨/값을 위아래로 쌓는다.
+                  usingDiff ? 'flex flex-col' : 'flex items-center justify-between'
+                }`}
+              >
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: rq.color }} />
                   <span className="text-xs text-gray-300 truncate">{rq.label}</span>
@@ -180,7 +188,7 @@ function MolPanel({ data, diffOverride, diffPending, plainSvg }: {
                   )}
                 </div>
                 {usingDiff ? (
-                  <span className="text-xs font-mono shrink-0" style={{ color: rq.color }}>{rq.extra}</span>
+                  <span className="text-xs font-mono pl-4" style={{ color: rq.color }}>{rq.extra}</span>
                 ) : (
                   <span
                     className="text-xs font-bold px-2.5 py-0.5 rounded-full shrink-0"

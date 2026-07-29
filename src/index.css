@@ -1,25 +1,25 @@
 @import "tailwindcss";
 
 @theme {
-  /* 전체 글씨 크기 상향 (Tailwind 기본값 대비 약 10~15% 확대) —
+  /* 전체 글씨 크기 상향 2단계 — Tailwind 기본값 대비 확대폭을 한 번 더 늘림.
      text-xs/sm/base/lg 등 기존 클래스는 그대로 두고 이 값들만 재정의하면
      프로젝트 전체에 일괄 반영된다. line-height 비율은 Tailwind 기본값과 동일하게 유지. */
-  --text-xs: 0.8125rem;      /* 13px, 기존 12px */
-  --text-xs--line-height: 1.333;
-  --text-sm: 0.9375rem;      /* 15px, 기존 14px */
-  --text-sm--line-height: 1.429;
-  --text-base: 1.0625rem;    /* 17px, 기존 16px */
-  --text-base--line-height: 1.5;
-  --text-lg: 1.1875rem;      /* 19px, 기존 18px */
-  --text-lg--line-height: 1.556;
-  --text-xl: 1.375rem;       /* 22px, 기존 20px */
-  --text-xl--line-height: 1.4;
-  --text-2xl: 1.625rem;      /* 26px, 기존 24px */
-  --text-2xl--line-height: 1.333;
-  --text-3xl: 2rem;          /* 32px, 기존 30px */
-  --text-3xl--line-height: 1.2;
-  --text-4xl: 2.5rem;        /* 40px, 기존 36px */
-  --text-4xl--line-height: 1.111;
+  --text-xs: 0.875rem;       /* 14px, 기존 12px */
+  --text-xs--line-height: 1.357;
+  --text-sm: 1rem;           /* 16px, 기존 14px */
+  --text-sm--line-height: 1.5;
+  --text-base: 1.125rem;     /* 18px, 기존 16px */
+  --text-base--line-height: 1.556;
+  --text-lg: 1.25rem;        /* 20px, 기존 18px */
+  --text-lg--line-height: 1.6;
+  --text-xl: 1.5rem;         /* 24px, 기존 20px */
+  --text-xl--line-height: 1.417;
+  --text-2xl: 1.75rem;       /* 28px, 기존 24px */
+  --text-2xl--line-height: 1.357;
+  --text-3xl: 2.125rem;      /* 34px, 기존 30px */
+  --text-3xl--line-height: 1.235;
+  --text-4xl: 2.75rem;       /* 44px, 기존 36px */
+  --text-4xl--line-height: 1.136;
 
   /* Main Color 1: Mint Green (Primary UI) */
   --color-cyan-300: #B3EFB2;

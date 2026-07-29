@@ -1,7 +1,7 @@
 {
-  "name": "mpro-variant-binder-proxy-server",
+  "name": "af3-mutanx-proxy-server",
   "version": "1.0.0",
-  "description": "Local Ubuntu AlphaFold3 API Proxy Server for SARS-CoV-2 Mpro-Variant Binder",
+  "description": "Local Ubuntu AlphaFold3 API Proxy Server for AF3-MutanX (SARS-CoV-2 Mpro Variant Resistance Platform)",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {

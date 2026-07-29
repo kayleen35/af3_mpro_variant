@@ -34,12 +34,12 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     <div className={`card-base p-5 ${bgClass} ${className}`}>
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
-          <p className="text-[14px] font-semibold text-gray-500 uppercase tracking-wider mb-1 truncate">
+          <p className="text-[15px] font-semibold text-gray-500 uppercase tracking-wider mb-1 truncate">
             {title}
           </p>
           <p className={`${valueSizeClass} font-bold text-gray-100 truncate`} title={String(value)}>{value}</p>
           {subtitle && (
-            <p className="text-[14px] text-gray-500 mt-1 truncate">{subtitle}</p>
+            <p className="text-[15px] text-gray-500 mt-1 truncate">{subtitle}</p>
           )}
         </div>
         {Icon && (

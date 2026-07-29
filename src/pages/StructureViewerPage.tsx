@@ -160,7 +160,7 @@ export const StructureViewerPage: React.FC = () => {
                   <span className="font-bold text-xs truncate w-full" title={inhibitor.name}>{inhibitor.name}</span>
                   {res && <StatusPill status={res.status} size="sm" />}
                 </div>
-                <span className="text-[14px] font-mono opacity-80 line-clamp-1">
+                <span className="text-[15px] font-mono opacity-80 line-clamp-1">
                   {res?.metrics && typeof res.metrics.cys145Distance === 'number'
                     ? `Cys145: ${res.metrics.cys145Distance.toFixed(2)}Å`
                     : '클릭하여 구조 렌더링'}

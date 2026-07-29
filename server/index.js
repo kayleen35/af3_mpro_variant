@@ -827,11 +827,13 @@ app.post('/api/molecule/highlight', (req, res) => {
 
 // derivative_analysis.py 호출 공용 헬퍼 — /api/derivative/analyze와
 // /api/analysis/:jobId/optimize (parent+candidate 동시 계산) 양쪽에서 재사용
-function spawnDerivativeAnalysis(smiles) {
+function spawnDerivativeAnalysis(smiles, referenceSmiles) {
   return new Promise((resolve, reject) => {
     const condaExe = path.join(os.homedir(), 'miniconda3', 'Scripts', 'conda.exe');
     const scriptPath = path.join(__dirname, 'derivative_analysis.py');
-    const proc = spawn(condaExe, ['run', '-n', 'af3-rdkit', '--no-capture-output', 'python', scriptPath, '--smiles', smiles]);
+    const scriptArgs = [scriptPath, '--smiles', smiles];
+    if (referenceSmiles) scriptArgs.push('--reference-smiles', referenceSmiles);
+    const proc = spawn(condaExe, ['run', '-n', 'af3-rdkit', '--no-capture-output', 'python', ...scriptArgs]);
     let out = '', err = '';
     proc.stdout.on('data', (d) => { out += d.toString(); });
     proc.stderr.on('data', (d) => { err += d.toString(); });
@@ -852,11 +854,11 @@ function spawnDerivativeAnalysis(smiles) {
 }
 
 app.post('/api/derivative/analyze', async (req, res) => {
-  const { smiles } = req.body;
+  const { smiles, referenceSmiles } = req.body;
   if (!smiles) return res.status(400).json({ success: false, error: 'smiles is required' });
 
   try {
-    const result = await spawnDerivativeAnalysis(smiles);
+    const result = await spawnDerivativeAnalysis(smiles, referenceSmiles);
     if (!result.success && result.error) {
       return res.status(400).json(result);
     }
@@ -927,7 +929,7 @@ app.post('/api/analysis/:jobId/optimize', async (req, res) => {
   try {
     [parentAnalysis, candidateAnalysis] = await Promise.all([
       spawnDerivativeAnalysis(parentSmiles),
-      spawnDerivativeAnalysis(smiles),
+      spawnDerivativeAnalysis(smiles, parentSmiles),
     ]);
   } catch (e) {
     return res.status(500).json({ error: 'RDKit 물성 계산 실패', details: e.details || e.message });

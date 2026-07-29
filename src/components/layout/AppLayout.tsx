@@ -25,7 +25,7 @@ export const AppLayout: React.FC = () => {
             {/* Subtle Research Disclaimer Footer */}
             <footer className="mt-12 pt-6 border-t border-[#243047]/60 text-center text-xs text-gray-500">
               <p>
-                Mpro-Variant Binder Research Platform &bull; Powered by Local Ubuntu AlphaFold3 &bull;{' '}
+                AF3-MutanX Research Platform &bull; Powered by Local Ubuntu AlphaFold3 &bull;{' '}
                 <span className="text-violet-400 font-medium">Research Only (Not for Clinical Use)</span>
               </p>
             </footer>

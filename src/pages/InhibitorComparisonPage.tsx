@@ -154,7 +154,7 @@ export const InhibitorComparisonPage: React.FC = () => {
                   <h3 className="font-bold text-base text-gray-100">{item.name}</h3>
                   <StatusPill status={item.status} size="sm" />
                 </div>
-                <span className="text-[14px] font-mono px-2 py-0.5 rounded bg-[#141b2d] text-gray-400 border border-[#243047]">
+                <span className="text-[15px] font-mono px-2 py-0.5 rounded bg-[#141b2d] text-gray-400 border border-[#243047]">
                   ID: {item.inhibitorId}
                 </span>
               </div>

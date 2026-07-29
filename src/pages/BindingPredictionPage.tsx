@@ -257,12 +257,12 @@ export const BindingPredictionPage: React.FC = () => {
             <div className="p-4 rounded-xl bg-[#141b2d]/80 border border-cyan-500/30 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-xs text-gray-200">Mpro Dimer Mode</span>
-                <span className="inline-flex items-center gap-1 text-[14px] font-mono text-cyan-400 font-bold bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-500/40">
+                <span className="inline-flex items-center gap-1 text-[15px] font-mono text-cyan-400 font-bold bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-500/40">
                   <Lock className="w-3 h-3" />
                   <span>고정값</span>
                 </span>
               </div>
-              <p className="text-[14px] text-gray-400 leading-relaxed">
+              <p className="text-[15px] text-gray-400 leading-relaxed">
                 SARS-CoV-2 Mpro는 Homodimer 복합체에서 촉매 기질 결합 능력이 발생하므로, 다이머 모델링 모드가 필수
                 고정됩니다.
               </p>
@@ -275,11 +275,11 @@ export const BindingPredictionPage: React.FC = () => {
                   <Zap className="w-3.5 h-3.5 text-violet-400" />
                   <span>WSL Ubuntu AlphaFold 3 GPU 모델링</span>
                 </span>
-                <span className="text-[14px] font-mono px-2 py-0.5 rounded bg-violet-950/80 text-violet-300 border border-violet-500/50 font-bold">
+                <span className="text-[15px] font-mono px-2 py-0.5 rounded bg-violet-950/80 text-violet-300 border border-violet-500/50 font-bold">
                   RTX 4070
                 </span>
               </div>
-              <p className="text-[14px] text-gray-300 leading-relaxed">
+              <p className="text-[15px] text-gray-300 leading-relaxed">
                 입력된 단백질 서열이 WSL Ubuntu 서버로 전송되어 정식 입력 파일(JSON)을 생성한 후, 로컬 GPU(NVIDIA RTX 4070) 및 PyTorch/JAX 엔진으로 실제 3D 복합체 구조를 신규 모델링합니다.
               </p>
             </div>
@@ -297,7 +297,7 @@ export const BindingPredictionPage: React.FC = () => {
                 placeholder="예: 42 (재현 가능한 연산 필요 시)"
                 className="w-full px-4 py-3 rounded-xl bg-[#141b2d] border border-[#243047] text-gray-100 font-mono text-xs placeholder:text-gray-600 focus:outline-none focus:border-cyan-500 transition-colors"
               />
-              <p className="text-[14px] text-gray-500 font-mono">
+              <p className="text-[15px] text-gray-500 font-mono">
                 * 비워둘 경우 로컬 AF3 서버에서 임의 시드가 자동 할당됩니다.
               </p>
             </div>

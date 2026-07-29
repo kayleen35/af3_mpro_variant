@@ -68,7 +68,7 @@ export const DashboardPage: React.FC = () => {
               <ResearchBadge />
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
-              SARS-CoV-2 Mpro-Variant Binder
+              AF3-MutanX — SARS-CoV-2 Mpro 변이 대응 플랫폼
             </h1>
             <p className="text-sm md:text-base text-gray-300 leading-relaxed">
               로컬 Ubuntu AlphaFold3 서버를 활용한 SARS-CoV-2 메인 프로테아제(Mpro, 3CLpro) 변이체 구조 분석 및

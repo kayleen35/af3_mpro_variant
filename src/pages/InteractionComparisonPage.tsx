@@ -24,16 +24,6 @@ interface StructureAnalysisResult {
   chimeraxCommands: { plddt: string; contacts_total: string; contacts_anchor: string[]; buried: string; hbonds: string };
 }
 
-function CommandBlock({ label, cmd, result }: { label?: string; cmd: string; result?: string }) {
-  return (
-    <div className="mb-3">
-      {label && <p className="text-xs text-gray-400 mb-1">{label}</p>}
-      <div className="rounded-lg bg-[#0a0f1a] border border-[#1e2d40] px-4 py-2.5 font-mono text-sm text-[#8FD88E] leading-relaxed">{cmd}</div>
-      {result && <div className="mt-1 px-4 py-1.5 text-xs font-mono text-gray-300 bg-[#111827] rounded-b-lg border-x border-b border-[#1e2d40]">→ {result}</div>}
-    </div>
-  );
-}
-
 function PlddtBar({ value, max = 100 }: { value: number; max?: number }) {
   const pct = Math.min((value / max) * 100, 100);
   const color = value >= 90 ? "#1d4ed8" : value >= 70 ? "#0ea5e9" : value >= 50 ? "#eab308" : "#f97316";
@@ -138,9 +128,8 @@ function AnalysisPanel({ title, subtitle, accentClass, job, fallbackInhibitors, 
                 <span className="ml-auto text-xs font-mono px-2 py-0.5 rounded bg-cyan-900/50 text-cyan-300 border border-cyan-700/50">{analysisResult.plddt.classification}</span>
               )}
             </div>
-            <CommandBlock cmd="color bfactor #1 palette alphafold" label="ChimeraX 명령어" />
             {analysisResult.plddt.mean != null ? (
-              <div className="space-y-2 mt-2">
+              <div className="space-y-2">
                 {[{ label: "평균", value: analysisResult.plddt.mean }, { label: "최솟값", value: analysisResult.plddt.min! }, { label: "최댓값", value: analysisResult.plddt.max! }].map(({ label, value }) => (
                   <div key={label}><p className="text-xs text-gray-500 mb-1">{label}</p><PlddtBar value={value} /></div>
                 ))}
@@ -153,7 +142,10 @@ function AnalysisPanel({ title, subtitle, accentClass, job, fallbackInhibitors, 
               <h3 className="text-sm font-bold text-gray-100">접촉수 (contacts)</h3>
               <span className="ml-auto text-xs font-mono px-2 py-0.5 rounded bg-cyan-900/50 text-cyan-300 border border-cyan-700/50">총 {analysisResult.contacts.total}개</span>
             </div>
-            <CommandBlock cmd="contacts #1 & ligand restrict #1/A" label="총 접촉 (리간드↔단백질)" result={`${analysisResult.contacts.total}개 (< 4.0 Å)`} />
+            <div className="mb-3 px-3 py-2 rounded-lg bg-[#141b2d] border border-[#1e2d40] text-xs font-mono text-gray-300">
+              총 접촉 (리간드↔단백질) <span className="text-cyan-300 font-bold">{analysisResult.contacts.total}개</span>
+              <span className="text-gray-500"> (&lt; 4.0 Å)</span>
+            </div>
             <div className="space-y-1.5">
               {Object.entries(analysisResult.contacts.anchorResidues).map(([resseq, info]) => (
                 <div key={resseq} className="border border-[#1e2d40] rounded-lg overflow-hidden">
@@ -193,8 +185,7 @@ function AnalysisPanel({ title, subtitle, accentClass, job, fallbackInhibitors, 
               <Droplets className="w-4 h-4 text-cyan-400" />
               <h3 className="text-sm font-bold text-gray-100">매몰 면적 (buried area)</h3>
             </div>
-            <CommandBlock cmd="measure buriedarea #1 & ligand withAtoms2 #1/A" label="ChimeraX 명령어" />
-            <div className="grid grid-cols-3 gap-2 mt-2">
+            <div className="grid grid-cols-3 gap-2">
               {[{ label: "매몰 면적", value: `${analysisResult.buriedArea.buried_A2}`, unit: "Å²", color: "text-cyan-400" },
                 { label: "리간드 표면", value: `${analysisResult.buriedArea.ligand_A2}`, unit: "Å²", color: "text-gray-200" },
                 { label: "매몰 비율", value: `${analysisResult.buriedArea.percent}`, unit: "%", color: analysisResult.buriedArea.percent >= 30 ? "text-emerald-400" : "text-amber-400" }
@@ -212,7 +203,10 @@ function AnalysisPanel({ title, subtitle, accentClass, job, fallbackInhibitors, 
               <h3 className="text-sm font-bold text-gray-100">수소결합 (H-bonds)</h3>
               <span className="ml-auto text-xs font-mono px-2 py-0.5 rounded bg-cyan-900/50 text-cyan-300 border border-cyan-700/50">{analysisResult.hbonds.count}개</span>
             </div>
-            <CommandBlock cmd="hbonds #1 & ligand restrict #1/A log true" label="ChimeraX 명령어" result={`${analysisResult.hbonds.count}개 (D-A < 3.5 Å)`} />
+            <div className="px-3 py-2 rounded-lg bg-[#141b2d] border border-[#1e2d40] text-xs font-mono text-gray-300">
+              <span className="text-cyan-300 font-bold">{analysisResult.hbonds.count}개</span>
+              <span className="text-gray-500"> (D-A &lt; 3.5 Å)</span>
+            </div>
             {analysisResult.hbonds.count > 0 && (
               <div className="mt-2">
                 <button type="button" onClick={() => setExpandedHbond(!expandedHbond)}
@@ -244,23 +238,6 @@ function AnalysisPanel({ title, subtitle, accentClass, job, fallbackInhibitors, 
             )}
           </div>
 
-          {/* ChimeraX 명령어 모음 */}
-          <div className="card-base p-4 bg-[#0b1020] border-[#1e2d40]">
-            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#1e2d40]">
-              <Terminal className="w-4 h-4 text-cyan-400" />
-              <h3 className="text-sm font-bold text-gray-100">ChimeraX 명령어 모음</h3>
-            </div>
-            <p className="text-xs text-gray-500 mb-3">단백질 = /A, 리간드 = /L, 모델 = #1 기준</p>
-            <div className="space-y-2">
-              <CommandBlock label="pLDDT 색칠" cmd="color bfactor #1 palette alphafold" />
-              <CommandBlock label="접촉수 (총)" cmd="contacts #1 & ligand restrict #1/A" result={`${analysisResult.contacts.total}개`} />
-              {Object.entries(analysisResult.contacts.anchorResidues).map(([resseq, info]) => (
-                <CommandBlock key={resseq} label={`${info.label}과의 접촉`} cmd={`contacts #1 & ligand restrict #1:${resseq}`} result={`${info.count}개`} />
-              ))}
-              <CommandBlock label="매몰 면적" cmd="measure buriedarea #1 & ligand withAtoms2 #1/A" result={`${analysisResult.buriedArea.buried_A2} Å² (${analysisResult.buriedArea.percent}%)`} />
-              <CommandBlock label="수소결합" cmd="hbonds #1 & ligand restrict #1/A log true" result={`${analysisResult.hbonds.count}개`} />
-            </div>
-          </div>
         </div>
       )}
       {!analysisResult && !analyzing && (
@@ -467,7 +444,7 @@ export const InteractionComparisonPage: React.FC = () => {
         </div>
         <h1 className="text-2xl font-bold text-gray-100 flex items-center gap-2.5">
           <GitCompare className="w-7 h-7 text-cyan-400" />
-          <span>AF3 구조 분석 (ChimeraX 동등)</span>
+          <span>AF3 구조 분석</span>
         </h1>
         <p className="text-sm text-gray-400 mt-1">야생형 (WT) Mpro와 변이형 Mpro의 억제제 결합 구조를 나란히 비교합니다.</p>
       </div>

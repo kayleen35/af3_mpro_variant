@@ -2,6 +2,8 @@ import sys
 import json
 import argparse
 from rdkit import Chem
+from rdkit.Chem import AllChem
+from rdkit.Chem import rdFMCS
 from rdkit.Chem import Descriptors
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem import Draw
@@ -20,16 +22,43 @@ try:
 except Exception:
     _ALERT_CATALOG = None
 
-def analyze_derivative(smiles):
+def analyze_derivative(smiles, reference_smiles=None):
     mol = Chem.MolFromSmiles(smiles)
     if not mol:
         return {"error": "Invalid SMILES string"}
 
-    # SVG 생성용
-    try:
-        Chem.rdDepictor.Compute2DCoords(mol)
-    except:
-        pass
+    # SVG 생성용 — reference_smiles(WT/parent)가 주어지면 공통 골격(scaffold)의
+    # 2D 배치를 그쪽에 맞춰 정렬한다. 그렇지 않으면 RDKit이 후보 분자마다
+    # 독립적으로 좌표를 계산해, WT와 나란히 놓았을 때 방향이 제각각이라
+    # 어디가 바뀌었는지 눈으로 비교하기 어려워진다.
+    aligned = False
+    if reference_smiles:
+        try:
+            ref_mol = Chem.MolFromSmiles(reference_smiles)
+            if ref_mol is not None:
+                Chem.rdDepictor.Compute2DCoords(ref_mol)
+                # GenerateDepictionMatching2DStructure의 기본(refPatt=None) 자동 매칭은
+                # 종종 작은/부실한 공통부위만 찾아 정렬이 사실상 안 먹힌다. MCS(최대 공통
+                # 부분구조)를 직접 계산해 refPatt으로 명시하면 공통 골격 좌표가 정확히
+                # 일치한다(검증: warhead 원자 좌표 오차 0.000).
+                mcs = rdFMCS.FindMCS(
+                    [ref_mol, mol],
+                    bondCompare=rdFMCS.BondCompare.CompareOrder,
+                    atomCompare=rdFMCS.AtomCompare.CompareElements,
+                    ringMatchesRingOnly=True,
+                )
+                if mcs.numAtoms >= 3:
+                    core = Chem.MolFromSmarts(mcs.smartsString)
+                    AllChem.GenerateDepictionMatching2DStructure(mol, ref_mol, refPatt=core, acceptFailure=True)
+                    aligned = True
+        except Exception:
+            aligned = False
+
+    if not aligned:
+        try:
+            Chem.rdDepictor.Compute2DCoords(mol)
+        except:
+            pass
 
     # 물리화학적 특성 계산
     mw = Descriptors.MolWt(mol)
@@ -164,7 +193,9 @@ def analyze_derivative(smiles):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--smiles", type=str, required=True)
+    parser.add_argument("--reference-smiles", type=str, default=None,
+                         help="WT/parent SMILES — 지정 시 2D 배치를 이 구조에 맞춰 정렬")
     args = parser.parse_args()
 
-    result = analyze_derivative(args.smiles)
+    result = analyze_derivative(args.smiles, reference_smiles=args.reference_smiles)
     print(json.dumps(result))
