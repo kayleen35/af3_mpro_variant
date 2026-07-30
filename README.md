@@ -144,6 +144,8 @@
 - 엔진 서버 `af3_engine_server.py` — **Python 표준 라이브러리 `http.server.HTTPServer`만으로 구현**(외부 웹 프레임워크 없음)
 - `subprocess.Popen`으로 `run_alphafold.py` 비동기 실행 후 로그 파일 폴링 방식
 
+> WSL Ubuntu 환경의 전체 구성(디렉토리 구조, 패키지 버전, 엔진 API, positive control 검증 스크립트)은 [docs/UBUNTU_AF3_SERVER.md](docs/UBUNTU_AF3_SERVER.md) 참고.
+
 ### 데이터 흐름
 
 ```
